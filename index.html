@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VLCrave Business Access</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    :root {
+      --primary: #ff7b00;
+      --secondary: #ffb800;
+      --light-bg: #ffffff;
+      --light-text: #222;
+      --dark-bg: #121212;
+      --dark-text: #f1f1f1;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--light-bg);
+      color: var(--light-text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.dark {
+      background: var(--dark-bg);
+      color: var(--dark-text);
+    }
+    .container {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0px 4px 12px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #fff;
+      margin-bottom: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      outline: none;
+      text-align: center;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      width: 100%;
+      border: none;
+      background: #fff;
+      color: var(--primary);
+      font-size: 1.1em;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: var(--secondary);
+      color: #fff;
+    }
+    .mode-toggle {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <button class="mode-toggle" id="themeToggle">🌙 Mode</button>
+  <div class="container">
+    <h1>🔐 VLCrave Business Access</h1>
+    <input type="password" id="kodeAkses" placeholder="Masukkan kode akses" />
+    <button onclick="cekKode()">Masuk</button>
+  </div>
+
+  <script>
+    const themeToggle = document.getElementById("themeToggle");
+    const body = document.body;
+    let isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (isDark) body.classList.add('dark');
+    themeToggle.textContent = isDark ? "☀️ Mode" : "🌙 Mode";
+
+    themeToggle.addEventListener("click", () => {
+      body.classList.toggle("dark");
+      isDark = body.classList.contains("dark");
+      themeToggle.textContent = isDark ? "☀️ Mode" : "🌙 Mode";
+    });
+
+    function cekKode() {
+      const kode = document.getElementById("kodeAkses").value.trim().toUpperCase();
+
+      if (!kode) {
+        Swal.fire({
+          icon: "warning",
+          title: "Oops!",
+          text: "Kode akses tidak boleh kosong",
+        });
+        return;
+      }
+
+      if (kode === "DELIVERY") {
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: "Mengalihkan ke halaman Delivery...",
+          showConfirmButton: false,
+          timer: 1500
+        });
+        setTimeout(() => {
+          window.location.href = "https://vlcrave.github.io/bisnis/delivery.html";
+        }, 1500);
+      } 
+      else if (kode === "GORENGAN") {
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: "Mengalihkan ke halaman Gorengan...",
+          showConfirmButton: false,
+          timer: 1500
+        });
+        setTimeout(() => {
+          window.location.href = "gorengan.html";
+        }, 1500);
+      } 
+      else {
+        Swal.fire({
+          icon: "error",
+          title: "Kode Salah!",
+          text: "Silakan coba lagi atau hubungi admin.",
+        });
+      }
+    }
+  </script>
+</body>
+</html>
