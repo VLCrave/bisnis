@@ -1,0 +1,275 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Usaha Gorengan</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h2 {
+      color: #58a6ff;
+    }
+    .container {
+      background: #161b22;
+      padding: 20px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 0 10px rgba(88,166,255,0.3);
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      color: #79c0ff;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      border-radius: 5px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px;
+      background: #238636;
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2ea043;
+    }
+    .share-btn {
+      background: #25D366;
+    }
+    .share-btn:hover {
+      background: #1ebe5d;
+    }
+    table {
+      width: 100%;
+      margin-top: 10px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #30363d;
+      padding: 6px;
+      text-align: center;
+    }
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 5px;
+      white-space: pre-line;
+    }
+  </style>
+</head>
+<body>
+  <h2>📊 Dashboard Usaha Gorengan</h2>
+  
+  <!-- Rincian Modal -->
+  <div class="container">
+    <h3>💸 Rincian Modal</h3>
+    <label>Nama Modal:</label>
+    <input type="text" id="modalNama" placeholder="Contoh: Pisang" />
+    <label>Nominal (Rp):</label>
+    <input type="number" id="modalNominal" placeholder="Contoh: 18000" />
+    <button onclick="tambahModal()">Tambah Modal</button>
+    <table id="modalTable">
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Nominal</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <p><b>Total Modal:</b> <span id="totalModal">Rp0</span></p>
+  </div>
+
+  <!-- Rekap Penghasilan -->
+  <div class="container">
+    <h3>📅 Rekap Penghasilan Harian</h3>
+    <label>Tambah Penghasilan (Rp):</label>
+    <input type="number" id="harianInput" placeholder="Contoh: 16000" />
+    <button onclick="tambahPenghasilan()">Tambah Penghasilan</button>
+    <table id="rekapTable">
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Penghasilan</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <p><b>Total Penghasilan:</b> <span id="totalPenghasilan">Rp0</span></p>
+  </div>
+
+  <!-- Laporan -->
+  <div class="container">
+    <h3>📑 Laporan Balik Modal</h3>
+    <div id="hasil" class="result"></div>
+    <button class="share-btn" onclick="shareWA()">📤 Bagikan ke WhatsApp</button>
+    <button onclick="exportExcel()">📥 Export ke Excel</button>
+  </div>
+
+  <script>
+    let modalData = JSON.parse(localStorage.getItem("modalData")) || [];
+    let penghasilanData = JSON.parse(localStorage.getItem("penghasilanData")) || [];
+    
+    function formatRupiah(angka) {
+      return "Rp" + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function simpanLocalStorage() {
+      localStorage.setItem("modalData", JSON.stringify(modalData));
+      localStorage.setItem("penghasilanData", JSON.stringify(penghasilanData));
+    }
+
+    function renderModal() {
+      let tbody = document.querySelector("#modalTable tbody");
+      tbody.innerHTML = "";
+      let totalModal = 0;
+
+      modalData.forEach((item, index) => {
+        totalModal += item.nominal;
+        let tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.nama}</td>
+          <td>${formatRupiah(item.nominal)}</td>
+          <td>
+            <button onclick="editModal(${index})">Edit</button>
+            <button onclick="hapusModal(${index})">Hapus</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("totalModal").innerText = formatRupiah(totalModal);
+      simpanLocalStorage();
+      renderLaporan();
+    }
+
+    function tambahModal() {
+      let nama = document.getElementById("modalNama").value.trim();
+      let nominal = parseInt(document.getElementById("modalNominal").value);
+
+      if (!nama || isNaN(nominal) || nominal <= 0) {
+        alert("Masukkan nama & nominal modal dengan benar!");
+        return;
+      }
+
+      modalData.push({ nama, nominal });
+      document.getElementById("modalNama").value = "";
+      document.getElementById("modalNominal").value = "";
+      renderModal();
+    }
+
+    function editModal(index) {
+      let item = modalData[index];
+      let namaBaru = prompt("Edit Nama Modal:", item.nama);
+      let nominalBaru = parseInt(prompt("Edit Nominal Modal:", item.nominal));
+      if (namaBaru && !isNaN(nominalBaru)) {
+        modalData[index] = { nama: namaBaru, nominal: nominalBaru };
+        renderModal();
+      }
+    }
+
+    function hapusModal(index) {
+      if (confirm("Yakin hapus modal ini?")) {
+        modalData.splice(index, 1);
+        renderModal();
+      }
+    }
+
+    function renderPenghasilan() {
+      let tbody = document.querySelector("#rekapTable tbody");
+      tbody.innerHTML = "";
+      let totalPenghasilan = 0;
+
+      penghasilanData.forEach(row => {
+        totalPenghasilan += row.value;
+        let tr = document.createElement("tr");
+        tr.innerHTML = `<td>${row.tanggal}</td><td>${formatRupiah(row.value)}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("totalPenghasilan").innerText = formatRupiah(totalPenghasilan);
+      simpanLocalStorage();
+      renderLaporan();
+    }
+
+    function tambahPenghasilan() {
+      let input = document.getElementById("harianInput");
+      let value = parseInt(input.value);
+      if (!value || value <= 0) {
+        alert("Masukkan penghasilan harian yang valid!");
+        return;
+      }
+
+      let today = new Date();
+      let tanggal = today.toLocaleDateString("id-ID");
+
+      penghasilanData.push({ tanggal, value });
+      input.value = "";
+      renderPenghasilan();
+    }
+
+    function renderLaporan() {
+      let totalModal = modalData.reduce((sum, item) => sum + item.nominal, 0);
+      let totalPenghasilan = penghasilanData.reduce((sum, item) => sum + item.value, 0);
+      let sisa = Math.max(totalModal - totalPenghasilan, 0);
+      let rataHarian = penghasilanData.length > 0 ? Math.round(totalPenghasilan / penghasilanData.length) : 0;
+      let estimasi = rataHarian > 0 ? Math.ceil(sisa / rataHarian) : "-";
+
+      let laporan = 
+`# Laporan Balik Modal Gorengan
+------------------------------
+Total Modal     : ${formatRupiah(totalModal)}
+Total Penghasilan : ${formatRupiah(totalPenghasilan)}
+Sisa Modal      : ${formatRupiah(sisa)}
+Rata-rata/Hari  : ${formatRupiah(rataHarian)}
+Estimasi Balik  : ${estimasi === "-" ? "Belum cukup data" : estimasi + " hari"}`;
+
+      document.getElementById("hasil").innerText = laporan;
+    }
+
+    function shareWA() {
+      let laporan = document.getElementById("hasil").innerText;
+      let url = `https://wa.me/?text=${encodeURIComponent(laporan)}`;
+      window.open(url, "_blank");
+    }
+
+    function exportExcel() {
+      let wb = XLSX.utils.book_new();
+      let modalSheet = XLSX.utils.json_to_sheet(modalData);
+      let penghasilanSheet = XLSX.utils.json_to_sheet(penghasilanData);
+      XLSX.utils.book_append_sheet(wb, modalSheet, "Rincian Modal");
+      XLSX.utils.book_append_sheet(wb, penghasilanSheet, "Penghasilan Harian");
+      XLSX.writeFile(wb, "Laporan_Usaha_Gorengan.xlsx");
+    }
+
+    // Load data awal
+    renderModal();
+    renderPenghasilan();
+  </script>
+</body>
+</html>
