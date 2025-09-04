@@ -1,296 +1,306 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VLCrave Business Page</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0d1117;
-            color: #fff;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #1f6feb;
-            padding: 15px;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
-        }
-        .container {
-            width: 90%;
-            max-width: 900px;
-            margin: 20px auto;
-            background-color: #161b22;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(31, 111, 235, 0.5);
-        }
-        h2 {
-            color: #58a6ff;
-            border-bottom: 2px solid #1f6feb;
-            padding-bottom: 5px;
-        }
-        input, button {
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 5px;
-            border: none;
-            font-size: 1rem;
-        }
-        input {
-            width: calc(100% - 20px);
-            background-color: #0d1117;
-            color: #fff;
-            border: 1px solid #30363d;
-        }
-        button {
-            cursor: pointer;
-            background-color: #1f6feb;
-            color: white;
-            transition: 0.3s;
-        }
-        button:hover {
-            background-color: #388bfd;
-        }
-        table {
-            width: 100%;
-            margin-top: 10px;
-            border-collapse: collapse;
-        }
-        table, th, td {
-            border: 1px solid #30363d;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #1f6feb;
-            color: white;
-        }
-        .actions button {
-            margin-right: 5px;
-            padding: 5px 8px;
-            font-size: 0.9rem;
-        }
-        .summary {
-            margin-top: 15px;
-            padding: 10px;
-            background-color: #21262d;
-            border-radius: 5px;
-        }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VLCrave Business Page</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #ff8c00, #ffd700);
+      color: #333;
+    }
+    header {
+      text-align: center;
+      padding: 15px;
+      background-color: rgba(255,255,255,0.2);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      color: white;
+    }
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px;
+      background-color: rgba(255,255,255,0.9);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    h2 {
+      color: #ff8c00;
+      border-left: 5px solid #ffd700;
+      padding-left: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th {
+      background: #ff8c00;
+      color: white;
+    }
+    td, th {
+      padding: 8px;
+      text-align: center;
+    }
+    button {
+      background: #ff8c00;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      margin: 5px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #e67600;
+    }
+    .btn-secondary {
+      background: #ffd700;
+      color: #333;
+    }
+    .actions {
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+    }
+    .summary {
+      margin-top: 15px;
+      padding: 10px;
+      background: #fff8e1;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+  </style>
 </head>
 <body>
-    <header>📊 VLCrave Business Page</header>
-    <div class="container">
-        <h2>💰 Rincian Modal</h2>
-        <input type="text" id="modalName" placeholder="Nama Modal">
-        <input type="number" id="modalValue" placeholder="Nominal (Rp)">
-        <button onclick="addModal()">Tambah Modal</button>
-        <table id="modalTable">
-            <thead>
-                <tr>
-                    <th>Nama Modal</th>
-                    <th>Nominal</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        <div class="summary">Total Modal: <span id="totalModal">Rp0</span></div>
 
-        <h2>📆 Rekap Penghasilan Harian</h2>
-        <input type="date" id="incomeDate">
-        <input type="number" id="incomeValue" placeholder="Nominal Penghasilan (Rp)">
-        <button onclick="addIncome()">Tambah Penghasilan</button>
-        <table id="incomeTable">
-            <thead>
-                <tr>
-                    <th>Tanggal</th>
-                    <th>Nominal</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        <div class="summary">Total Penghasilan: <span id="totalIncome">Rp0</span></div>
+<header>
+  <h1>📊 VLCrave Business Page</h1>
+</header>
 
-        <h2>📈 Laporan Laba/Rugi</h2>
-        <div class="summary">
-            <p>Total Modal: <span id="reportModal">Rp0</span></p>
-            <p>Total Penghasilan: <span id="reportIncome">Rp0</span></p>
-            <p>Laba/Rugi: <span id="reportProfit">Rp0</span></p>
-            <p>Persentase Profit: <span id="reportPercent">0%</span></p>
-            <p>Net Profit per Hari: <span id="reportNet">Rp0</span></p>
-        </div>
+<div class="container">
+  <h2>💰 Rincian Modal</h2>
+  <button onclick="addModal()">+ Tambah Modal</button>
+  <table id="modalTable">
+    <thead>
+      <tr>
+        <th>Nama Item</th>
+        <th>Nominal</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-        <div class="btn-group">
-            <button onclick="shareWhatsApp()">📤 Share WhatsApp</button>
-            <button onclick="exportExcel()">📥 Download Excel</button>
-        </div>
-    </div>
+  <h2>📆 Rekap Penghasilan</h2>
+  <button onclick="addIncome()">+ Tambah Penghasilan</button>
+  <table id="incomeTable">
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>Nominal</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-    <script>
-        let modalData = JSON.parse(localStorage.getItem('modalData')) || [];
-        let incomeData = JSON.parse(localStorage.getItem('incomeData')) || [];
+  <div class="summary">
+    <h2>📈 Laporan Laba / Rugi</h2>
+    <p><b>Total Modal:</b> Rp <span id="totalModal">0</span></p>
+    <p><b>Total Penghasilan:</b> Rp <span id="totalIncome">0</span></p>
+    <p><b>Laba/Rugi:</b> Rp <span id="profitLoss">0</span></p>
+    <p><b>Persentase Profit:</b> <span id="profitPercent">0</span>%</p>
+    <p><b>Net Profit per Hari:</b> Rp <span id="netProfit">0</span></p>
+  </div>
 
-        function formatRupiah(num) {
-            return 'Rp' + num.toLocaleString('id-ID');
-        }
+  <button onclick="shareWhatsApp()">📤 Bagikan ke WhatsApp</button>
+  <button class="btn-secondary" onclick="exportExcel()">📄 Export Excel</button>
+</div>
 
-        function saveData() {
-            localStorage.setItem('modalData', JSON.stringify(modalData));
-            localStorage.setItem('incomeData', JSON.stringify(incomeData));
-        }
+<script>
+  let modalList = JSON.parse(localStorage.getItem("modalList")) || [];
+  let incomeList = JSON.parse(localStorage.getItem("incomeList")) || [];
 
-        function updateModalTable() {
-            const tbody = document.querySelector('#modalTable tbody');
-            tbody.innerHTML = '';
-            modalData.forEach((item, index) => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${item.name}</td>
-                        <td>${formatRupiah(item.value)}</td>
-                        <td class="actions">
-                            <button onclick="editModal(${index})">Edit</button>
-                            <button onclick="deleteModal(${index})">Hapus</button>
-                        </td>
-                    </tr>`;
-            });
-            document.getElementById('totalModal').innerText = formatRupiah(getTotalModal());
-            updateReport();
-        }
+  function saveData() {
+    localStorage.setItem("modalList", JSON.stringify(modalList));
+    localStorage.setItem("incomeList", JSON.stringify(incomeList));
+    renderTables();
+  }
 
-        function updateIncomeTable() {
-            const tbody = document.querySelector('#incomeTable tbody');
-            tbody.innerHTML = '';
-            incomeData.forEach((item, index) => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${item.date}</td>
-                        <td>${formatRupiah(item.value)}</td>
-                        <td class="actions">
-                            <button onclick="editIncome(${index})">Edit</button>
-                            <button onclick="deleteIncome(${index})">Hapus</button>
-                        </td>
-                    </tr>`;
-            });
-            document.getElementById('totalIncome').innerText = formatRupiah(getTotalIncome());
-            updateReport();
-        }
+  function addModal() {
+    Swal.fire({
+      title: 'Tambah Modal',
+      html: '<input id="itemName" class="swal2-input" placeholder="Nama Item">' +
+            '<input id="itemPrice" type="number" class="swal2-input" placeholder="Nominal">',
+      confirmButtonText: 'Simpan',
+      preConfirm: () => {
+        const name = document.getElementById("itemName").value;
+        const price = parseInt(document.getElementById("itemPrice").value) || 0;
+        if (!name || price <= 0) return Swal.showValidationMessage("Lengkapi data!");
+        modalList.push({ name, price });
+        saveData();
+      }
+    });
+  }
 
-        function getTotalModal() {
-            return modalData.reduce((a, b) => a + b.value, 0);
-        }
+  function editModal(index) {
+    Swal.fire({
+      title: 'Edit Modal',
+      html: `<input id="editName" class="swal2-input" value="${modalList[index].name}">
+             <input id="editPrice" type="number" class="swal2-input" value="${modalList[index].price}">`,
+      confirmButtonText: 'Update',
+      preConfirm: () => {
+        const name = document.getElementById("editName").value;
+        const price = parseInt(document.getElementById("editPrice").value) || 0;
+        modalList[index] = { name, price };
+        saveData();
+      }
+    });
+  }
 
-        function getTotalIncome() {
-            return incomeData.reduce((a, b) => a + b.value, 0);
-        }
+  function deleteModal(index) {
+    Swal.fire({
+      title: 'Hapus Modal?',
+      text: 'Data akan dihapus permanen!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Hapus',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        modalList.splice(index, 1);
+        saveData();
+      }
+    });
+  }
 
-        function addModal() {
-            const name = document.getElementById('modalName').value;
-            const value = parseInt(document.getElementById('modalValue').value);
-            if (!name || isNaN(value)) return alert('Lengkapi data modal!');
-            modalData.push({ name, value });
-            document.getElementById('modalName').value = '';
-            document.getElementById('modalValue').value = '';
-            saveData();
-            updateModalTable();
-        }
+  function addIncome() {
+    Swal.fire({
+      title: 'Tambah Penghasilan',
+      html: '<input id="incomeDate" type="date" class="swal2-input">' +
+            '<input id="incomePrice" type="number" class="swal2-input" placeholder="Nominal">',
+      confirmButtonText: 'Simpan',
+      preConfirm: () => {
+        const date = document.getElementById("incomeDate").value;
+        const price = parseInt(document.getElementById("incomePrice").value) || 0;
+        if (!date || price <= 0) return Swal.showValidationMessage("Lengkapi data!");
+        incomeList.push({ date, price });
+        saveData();
+      }
+    });
+  }
 
-        function editModal(index) {
-            const newName = prompt('Edit nama modal:', modalData[index].name);
-            const newValue = parseInt(prompt('Edit nominal modal:', modalData[index].value));
-            if (newName && !isNaN(newValue)) {
-                modalData[index] = { name: newName, value: newValue };
-                saveData();
-                updateModalTable();
-            }
-        }
+  function editIncome(index) {
+    Swal.fire({
+      title: 'Edit Penghasilan',
+      html: `<input id="editDate" type="date" class="swal2-input" value="${incomeList[index].date}">
+             <input id="editIncome" type="number" class="swal2-input" value="${incomeList[index].price}">`,
+      confirmButtonText: 'Update',
+      preConfirm: () => {
+        incomeList[index].date = document.getElementById("editDate").value;
+        incomeList[index].price = parseInt(document.getElementById("editIncome").value);
+        saveData();
+      }
+    });
+  }
 
-        function deleteModal(index) {
-            if (confirm('Hapus modal ini?')) {
-                modalData.splice(index, 1);
-                saveData();
-                updateModalTable();
-            }
-        }
+  function deleteIncome(index) {
+    Swal.fire({
+      title: 'Hapus Penghasilan?',
+      text: 'Data akan dihapus permanen!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, Hapus',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        incomeList.splice(index, 1);
+        saveData();
+      }
+    });
+  }
 
-        function addIncome() {
-            const date = document.getElementById('incomeDate').value;
-            const value = parseInt(document.getElementById('incomeValue').value);
-            if (!date || isNaN(value)) return alert('Lengkapi data penghasilan!');
-            incomeData.push({ date, value });
-            document.getElementById('incomeDate').value = '';
-            document.getElementById('incomeValue').value = '';
-            saveData();
-            updateIncomeTable();
-        }
+  function renderTables() {
+    const modalTable = document.querySelector("#modalTable tbody");
+    modalTable.innerHTML = "";
+    modalList.forEach((item, i) => {
+      modalTable.innerHTML += `
+        <tr>
+          <td>${item.name}</td>
+          <td>Rp ${item.price.toLocaleString()}</td>
+          <td class="actions">
+            <button onclick="editModal(${i})">✏️</button>
+            <button onclick="deleteModal(${i})">🗑️</button>
+          </td>
+        </tr>`;
+    });
 
-        function editIncome(index) {
-            const newDate = prompt('Edit tanggal:', incomeData[index].date);
-            const newValue = parseInt(prompt('Edit nominal penghasilan:', incomeData[index].value));
-            if (newDate && !isNaN(newValue)) {
-                incomeData[index] = { date: newDate, value: newValue };
-                saveData();
-                updateIncomeTable();
-            }
-        }
+    const incomeTable = document.querySelector("#incomeTable tbody");
+    incomeTable.innerHTML = "";
+    incomeList.forEach((item, i) => {
+      incomeTable.innerHTML += `
+        <tr>
+          <td>${item.date}</td>
+          <td>Rp ${item.price.toLocaleString()}</td>
+          <td class="actions">
+            <button onclick="editIncome(${i})">✏️</button>
+            <button onclick="deleteIncome(${i})">🗑️</button>
+          </td>
+        </tr>`;
+    });
 
-        function deleteIncome(index) {
-            if (confirm('Hapus penghasilan ini?')) {
-                incomeData.splice(index, 1);
-                saveData();
-                updateIncomeTable();
-            }
-        }
+    const totalModal = modalList.reduce((sum, x) => sum + x.price, 0);
+    const totalIncome = incomeList.reduce((sum, x) => sum + x.price, 0);
+    const profitLoss = totalIncome - totalModal;
+    const profitPercent = totalModal > 0 ? ((profitLoss / totalModal) * 100).toFixed(2) : 0;
+    const netProfit = incomeList.length > 0 ? (profitLoss / incomeList.length).toFixed(0) : 0;
 
-        function updateReport() {
-            const totalModal = getTotalModal();
-            const totalIncome = getTotalIncome();
-            const profit = totalIncome - totalModal;
-            const percent = totalModal > 0 ? ((profit / totalModal) * 100).toFixed(2) : 0;
-            const netProfit = incomeData.length > 0 ? Math.floor(profit / incomeData.length) : 0;
+    document.getElementById("totalModal").textContent = totalModal.toLocaleString();
+    document.getElementById("totalIncome").textContent = totalIncome.toLocaleString();
+    document.getElementById("profitLoss").textContent = profitLoss.toLocaleString();
+    document.getElementById("profitPercent").textContent = profitPercent;
+    document.getElementById("netProfit").textContent = netProfit;
+  }
 
-            document.getElementById('reportModal').innerText = formatRupiah(totalModal);
-            document.getElementById('reportIncome').innerText = formatRupiah(totalIncome);
-            document.getElementById('reportProfit').innerText = formatRupiah(profit);
-            document.getElementById('reportPercent').innerText = percent + '%';
-            document.getElementById('reportNet').innerText = formatRupiah(netProfit);
-        }
+  function shareWhatsApp() {
+    const totalModal = modalList.reduce((sum, x) => sum + x.price, 0);
+    const totalIncome = incomeList.reduce((sum, x) => sum + x.price, 0);
+    const profitLoss = totalIncome - totalModal;
+    const profitPercent = totalModal > 0 ? ((profitLoss / totalModal) * 100).toFixed(2) : 0;
 
-        function shareWhatsApp() {
-            const totalModal = formatRupiah(getTotalModal());
-            const totalIncome = formatRupiah(getTotalIncome());
-            const profit = formatRupiah(getTotalIncome() - getTotalModal());
-            const message = `📊 *Laporan VLCrave Business Page*%0A%0A💰 Total Modal: ${totalModal}%0A📈 Total Penghasilan: ${totalIncome}%0A💵 Laba/Rugi: ${profit}`;
-            window.open(`https://wa.me/?text=${message}`, '_blank');
-        }
+    let message = `*VLCrave Business Page*%0A%0A`;
+    message += `💰 *Total Modal:* Rp ${totalModal.toLocaleString()}%0A`;
+    message += `📈 *Total Penghasilan:* Rp ${totalIncome.toLocaleString()}%0A`;
+    message += `💹 *Laba/Rugi:* Rp ${profitLoss.toLocaleString()}%0A`;
+    message += `📊 *Persentase Profit:* ${profitPercent}%`;
 
-        function exportExcel() {
-            const ws = XLSX.utils.json_to_sheet([
-                ...modalData.map(item => ({ Jenis: "Modal", Nama: item.name, Nominal: item.value })),
-                ...incomeData.map(item => ({ Jenis: "Penghasilan", Nama: item.date, Nominal: item.value }))
-            ]);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Laporan VLCrave");
-            XLSX.writeFile(wb, "Laporan_VLCrave.xlsx");
-        }
+    window.open(`https://wa.me/?text=${message}`, "_blank");
+  }
 
-        updateModalTable();
-        updateIncomeTable();
-    </script>
+  function exportExcel() {
+    const ws = XLSX.utils.json_to_sheet([
+      ...modalList.map(m => ({ Kategori: "Modal", Nama: m.name, Nominal: m.price })),
+      ...incomeList.map(i => ({ Kategori: "Penghasilan", Tanggal: i.date, Nominal: i.price }))
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Laporan VLCrave");
+    XLSX.writeFile(wb, "VLCrave_Business_Report.xlsx");
+  }
+
+  renderTables();
+</script>
+
 </body>
 </html>
