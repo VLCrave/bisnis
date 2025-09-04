@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VLCrave Gorengan</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #ff8c00, #ffd700);
+      color: #333;
+    }
+    header {
+      padding: 15px;
+      text-align: center;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    header h1 { font-size: 1.8rem; color: #fff; }
+    nav {
+      display: flex; justify-content: center; gap: 10px;
+      padding: 10px;
+      background: rgba(255,255,255,0.3);
+      position: sticky; top: 0;
+      backdrop-filter: blur(6px);
+    }
+    nav button {
+      background: #ff8c00; color: white;
+      border: none; padding: 8px 14px;
+      border-radius: 6px; cursor: pointer;
+      transition: 0.3s;
+    }
+    nav button:hover, nav button.active { background: #e67600; }
+    .container {
+      max-width: 900px; margin: 20px auto; padding: 15px;
+      background-color: rgba(255,255,255,0.9);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    h2 {
+      margin-bottom: 10px; color: #ff8c00;
+      border-left: 5px solid #ffd700; padding-left: 8px;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #ff8c00; color: #fff; }
+    .actions button { margin: 2px; }
+    .summary {
+      margin-top: 15px; padding: 10px;
+      background: #fff8e1; border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    canvas { margin-top: 15px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🍤 VLCrave Gorengan</h1>
+</header>
+
+<nav>
+  <button id="tabDashboard" class="active" onclick="showTab('dashboard')">Dashboard</button>
+  <button id="tabDaily" onclick="showTab('daily')">Laporan Harian</button>
+  <button id="tabMonthly" onclick="showTab('monthly')">Laporan Bulanan</button>
+</nav>
+
+<div class="container" id="dashboard">
+  <h2>💰 Rincian Modal</h2>
+  <button onclick="addModal()">+ Tambah Modal</button>
+  <table id="modalTable">
+    <thead><tr><th>Nama Item</th><th>Nominal</th><th>Aksi</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>📆 Rekap Penghasilan</h2>
+  <button onclick="addIncome()">+ Tambah Penghasilan</button>
+  <table id="incomeTable">
+    <thead><tr><th>Tanggal</th><th>Nominal</th><th>Aksi</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="summary">
+    <h2>📈 Laporan Laba / Rugi</h2>
+    <p><b>Total Modal:</b> Rp <span id="totalModal">0</span></p>
+    <p><b>Total Penghasilan:</b> Rp <span id="totalIncome">0</span></p>
+    <p><b>Laba/Rugi:</b> Rp <span id="profitLoss">0</span></p>
+    <p><b>Persentase Profit:</b> <span id="profitPercent">0</span>%</p>
+    <p><b>Net Profit per Hari:</b> Rp <span id="netProfit">0</span></p>
+  </div>
+
+  <button onclick="shareWhatsApp()">📤 Bagikan ke WhatsApp</button>
+  <button onclick="exportExcel()">📄 Export Excel</button>
+</div>
+
+<!-- Laporan Harian -->
+<div class="container hidden" id="daily">
+  <h2>📅 Laporan Harian</h2>
+  <label>Pilih Bulan: 
+    <input type="month" id="filterDaily" onchange="renderDailyReport()">
+  </label>
+  <table id="dailyTable">
+    <thead><tr><th>Tanggal</th><th>Penghasilan</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <canvas id="dailyChart"></canvas>
+  <button onclick="exportDailyExcel()">📄 Export Excel</button>
+</div>
+
+<!-- Laporan Bulanan -->
+<div class="container hidden" id="monthly">
+  <h2>📆 Laporan Bulanan</h2>
+  <table id="monthlyTable">
+    <thead><tr><th>Bulan</th><th>Total Penghasilan</th><th>Rata-rata Harian</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <canvas id="monthlyChart"></canvas>
+  <button onclick="exportMonthlyExcel()">📄 Export Excel</button>
+</div>
+
+<script>
+const storageKeyModal = "modalList_gorengan";
+const storageKeyIncome = "incomeList_gorengan";
+
+let modalList = JSON.parse(localStorage.getItem(storageKeyModal)) || [];
+let incomeList = JSON.parse(localStorage.getItem(storageKeyIncome)) || [];
+let dailyChart, monthlyChart;
+
+function saveData() {
+  localStorage.setItem(storageKeyModal, JSON.stringify(modalList));
+  localStorage.setItem(storageKeyIncome, JSON.stringify(incomeList));
+  renderTables();
+  renderDailyReport();
+  renderMonthlyReport();
+}
+
+function addModal() {
+  Swal.fire({
+    title: 'Tambah Modal',
+    html: '<input id="itemName" class="swal2-input" placeholder="Nama Item">' +
+          '<input id="itemPrice" type="number" class="swal2-input" placeholder="Nominal">',
+    confirmButtonText: 'Simpan',
+    preConfirm: () => {
+      const name = document.getElementById("itemName").value;
+      const price = parseInt(document.getElementById("itemPrice").value) || 0;
+      if (!name || price <= 0) return Swal.showValidationMessage("Lengkapi data!");
+      modalList.push({ name, price });
+      saveData();
+    }
+  });
+}
+
+function addIncome() {
+  Swal.fire({
+    title: 'Tambah Penghasilan',
+    html: '<input id="incomeDate" type="date" class="swal2-input">' +
+          '<input id="incomePrice" type="number" class="swal2-input" placeholder="Nominal">',
+    confirmButtonText: 'Simpan',
+    preConfirm: () => {
+      const date = document.getElementById("incomeDate").value;
+      const price = parseInt(document.getElementById("incomePrice").value) || 0;
+      if (!date || price <= 0) return Swal.showValidationMessage("Lengkapi data!");
+      incomeList.push({ date, price });
+      saveData();
+    }
+  });
+}
+
+function editModal(i) {
+  Swal.fire({
+    title: 'Edit Modal',
+    html: `<input id="editName" class="swal2-input" value="${modalList[i].name}">
+           <input id="editPrice" type="number" class="swal2-input" value="${modalList[i].price}">`,
+    confirmButtonText: 'Update',
+    preConfirm: () => {
+      modalList[i].name = document.getElementById("editName").value;
+      modalList[i].price = parseInt(document.getElementById("editPrice").value);
+      saveData();
+    }
+  });
+}
+
+function editIncome(i) {
+  Swal.fire({
+    title: 'Edit Penghasilan',
+    html: `<input id="editDate" type="date" class="swal2-input" value="${incomeList[i].date}">
+           <input id="editIncome" type="number" class="swal2-input" value="${incomeList[i].price}">`,
+    confirmButtonText: 'Update',
+    preConfirm: () => {
+      incomeList[i].date = document.getElementById("editDate").value;
+      incomeList[i].price = parseInt(document.getElementById("editIncome").value);
+      saveData();
+    }
+  });
+}
+
+function deleteModal(i) {
+  Swal.fire({
+    title: 'Hapus Modal?',
+    text: 'Data akan dihapus permanen!',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, Hapus'
+  }).then(res => {
+    if (res.isConfirmed) {
+      modalList.splice(i, 1);
+      saveData();
+    }
+  });
+}
+
+function deleteIncome(i) {
+  Swal.fire({
+    title: 'Hapus Penghasilan?',
+    text: 'Data akan dihapus permanen!',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, Hapus'
+  }).then(res => {
+    if (res.isConfirmed) {
+      incomeList.splice(i, 1);
+      saveData();
+    }
+  });
+}
+
+function renderTables() {
+  const modalTable = document.querySelector("#modalTable tbody");
+  modalTable.innerHTML = "";
+  modalList.forEach((m, i) => {
+    modalTable.innerHTML += `<tr>
+      <td>${m.name}</td>
+      <td>Rp ${m.price.toLocaleString()}</td>
+      <td><button onclick="editModal(${i})">✏️</button>
+          <button onclick="deleteModal(${i})">🗑️</button></td>
+    </tr>`;
+  });
+
+  const incomeTable = document.querySelector("#incomeTable tbody");
+  incomeTable.innerHTML = "";
+  incomeList.forEach((iData, i) => {
+    incomeTable.innerHTML += `<tr>
+      <td>${iData.date}</td>
+      <td>Rp ${iData.price.toLocaleString()}</td>
+      <td><button onclick="editIncome(${i})">✏️</button>
+          <button onclick="deleteIncome(${i})">🗑️</button></td>
+    </tr>`;
+  });
+
+  const totalModal = modalList.reduce((s, x) => s + x.price, 0);
+  const totalIncome = incomeList.reduce((s, x) => s + x.price, 0);
+  const profitLoss = totalIncome - totalModal;
+  const profitPercent = totalModal > 0 ? ((profitLoss / totalModal) * 100).toFixed(2) : 0;
+  const netProfit = incomeList.length > 0 ? (profitLoss / incomeList.length).toFixed(0) : 0;
+
+  document.getElementById("totalModal").textContent = totalModal.toLocaleString();
+  document.getElementById("totalIncome").textContent = totalIncome.toLocaleString();
+  document.getElementById("profitLoss").textContent = profitLoss.toLocaleString();
+  document.getElementById("profitPercent").textContent = profitPercent;
+  document.getElementById("netProfit").textContent = netProfit;
+}
+
+function renderDailyReport() {
+  const month = document.getElementById("filterDaily").value;
+  const dailyData = {};
+  incomeList.forEach(i => {
+    if (!month || i.date.startsWith(month)) {
+      dailyData[i.date] = (dailyData[i.date] || 0) + i.price;
+    }
+  });
+
+  const dailyTable = document.querySelector("#dailyTable tbody");
+  dailyTable.innerHTML = "";
+  Object.keys(dailyData).sort().forEach(d => {
+    dailyTable.innerHTML += `<tr><td>${d}</td><td>Rp ${dailyData[d].toLocaleString()}</td></tr>`;
+  });
+
+  const ctx = document.getElementById("dailyChart").getContext("2d");
+  if (dailyChart) dailyChart.destroy();
+  dailyChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: Object.keys(dailyData),
+      datasets: [{
+        label: "Penghasilan Harian",
+        data: Object.values(dailyData),
+        borderColor: "#ff8c00",
+        backgroundColor: "rgba(255,140,0,0.3)",
+        tension: 0.3
+      }]
+    }
+  });
+}
+
+function renderMonthlyReport() {
+  const monthlyData = {};
+  incomeList.forEach(i => {
+    const month = i.date.slice(0, 7);
+    monthlyData[month] = (monthlyData[month] || 0) + i.price;
+  });
+
+  const monthlyTable = document.querySelector("#monthlyTable tbody");
+  monthlyTable.innerHTML = "";
+  Object.keys(monthlyData).sort().forEach(m => {
+    const daysInMonth = incomeList.filter(x => x.date.startsWith(m)).length;
+    const avg = (monthlyData[m] / daysInMonth).toFixed(0);
+    monthlyTable.innerHTML += `<tr><td>${m}</td><td>Rp ${monthlyData[m].toLocaleString()}</td><td>Rp ${parseInt(avg).toLocaleString()}</td></tr>`;
+  });
+
+  const ctx = document.getElementById("monthlyChart").getContext("2d");
+  if (monthlyChart) monthlyChart.destroy();
+  monthlyChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: Object.keys(monthlyData),
+      datasets: [{
+        label: "Penghasilan Bulanan",
+        data: Object.values(monthlyData),
+        backgroundColor: "#ffd700"
+      }]
+    }
+  });
+}
+
+function shareWhatsApp() {
+  const totalModal = modalList.reduce((s, x) => s + x.price, 0);
+  const totalIncome = incomeList.reduce((s, x) => s + x.price, 0);
+  const profitLoss = totalIncome - totalModal;
+  const profitPercent = totalModal > 0 ? ((profitLoss / totalModal) * 100).toFixed(2) : 0;
+
+  let msg = `*VLCrave Gorengan*%0A%0A💰 Total Modal: Rp ${totalModal.toLocaleString()}%0A📈 Total Penghasilan: Rp ${totalIncome.toLocaleString()}%0A💹 Laba/Rugi: Rp ${profitLoss.toLocaleString()}%0A📊 Persentase Profit: ${profitPercent}%`;
+  window.open(`https://wa.me/?text=${msg}`, "_blank");
+}
+
+function exportExcel() {
+  const ws = XLSX.utils.json_to_sheet([
+    ...modalList.map(m => ({ Kategori: "Modal", Nama: m.name, Nominal: m.price })),
+    ...incomeList.map(i => ({ Kategori: "Penghasilan", Tanggal: i.date, Nominal: i.price }))
+  ]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Laporan Gorengan");
+  XLSX.writeFile(wb, "VLCrave_Gorengan_Report.xlsx");
+}
+
+function exportDailyExcel() {
+  const ws = XLSX.utils.table_to_sheet(document.getElementById("dailyTable"));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Laporan Harian");
+  XLSX.writeFile(wb, "Laporan_Harian_Gorengan.xlsx");
+}
+
+function exportMonthlyExcel() {
+  const ws = XLSX.utils.table_to_sheet(document.getElementById("monthlyTable"));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Laporan Bulanan");
+  XLSX.writeFile(wb, "Laporan_Bulanan_Gorengan.xlsx");
+}
+
+function showTab(tab) {
+  document.querySelectorAll(".container").forEach(c => c.classList.add("hidden"));
+  document.getElementById(tab).classList.remove("hidden");
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add("active");
+}
+
+renderTables();
+renderDailyReport();
+renderMonthlyReport();
+</script>
+
+</body>
+</html>
