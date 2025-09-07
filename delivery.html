@@ -96,6 +96,11 @@
     .hidden {
       display: none;
     }
+    .total-transactions {
+      margin-top: 8px;
+      font-weight: 700;
+      color: #333;
+    }
   </style>
 </head>
 <body>
@@ -150,10 +155,13 @@
   </label>
   <table id="dailyTable">
     <thead>
-      <tr><th>Tanggal</th><th>Penghasilan</th></tr>
+      <tr><th>Tanggal</th><th>Penghasilan</th><th>Transaksi (Jumlah)</th></tr>
     </thead>
     <tbody></tbody>
   </table>
+
+  <div class="total-transactions" id="dailyTotalTransactions">Total Transaksi (bulan): 0</div>
+
   <canvas id="dailyChart"></canvas>
   <button onclick="exportDailyExcel()">📄 Export Excel</button>
 </div>
@@ -163,7 +171,7 @@
   <h2>📆 Laporan Bulanan</h2>
   <table id="monthlyTable">
     <thead>
-      <tr><th>Bulan</th><th>Total Penghasilan</th><th>Rata-rata Harian</th></tr>
+      <tr><th>Bulan</th><th>Total Penghasilan</th><th>Total Transaksi</th><th>Rata-rata Harian</th></tr>
     </thead>
     <tbody></tbody>
   </table>
@@ -210,7 +218,7 @@ function addIncome() {
       const date = document.getElementById("incomeDate").value;
       const price = parseInt(document.getElementById("incomePrice").value) || 0;
       if (!date || price <= 0) return Swal.showValidationMessage("Lengkapi data!");
-      incomeList.push({ date, price });
+      incomeList.push({ date, price }); // unchanged structure; each entry = one transaksi
       saveData();
     }
   });
@@ -312,49 +320,82 @@ function renderTables() {
 
 function renderDailyReport() {
   const month = document.getElementById("filterDaily").value;
+  // dailyData: { '2025-09-06': { total: 16000, transactions: 3 } }
   const dailyData = {};
   incomeList.forEach(i => {
     if (!month || i.date.startsWith(month)) {
-      dailyData[i.date] = (dailyData[i.date] || 0) + i.price;
+      if (!dailyData[i.date]) dailyData[i.date] = { total: 0, transactions: 0 };
+      dailyData[i.date].total += i.price;
+      dailyData[i.date].transactions += 1; // each incomeList entry = 1 transaksi
     }
   });
 
   const dailyTable = document.querySelector("#dailyTable tbody");
   dailyTable.innerHTML = "";
-  Object.keys(dailyData).sort().forEach(d => {
-    dailyTable.innerHTML += `<tr><td>${d}</td><td>Rp ${dailyData[d].toLocaleString()}</td></tr>`;
+  // sort dates
+  const dates = Object.keys(dailyData).sort();
+  let totalTransactionsInMonth = 0;
+  dates.forEach(d => {
+    const info = dailyData[d];
+    dailyTable.innerHTML += `<tr><td>${d}</td><td>Rp ${info.total.toLocaleString()}</td><td>${info.transactions}</td></tr>`;
+    totalTransactionsInMonth += info.transactions;
   });
+
+  document.getElementById("dailyTotalTransactions").textContent = `Total Transaksi (bulan): ${totalTransactionsInMonth}`;
 
   const ctx = document.getElementById("dailyChart").getContext("2d");
   if (dailyChart) dailyChart.destroy();
   dailyChart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: Object.keys(dailyData),
+      labels: dates,
       datasets: [{
         label: "Penghasilan Harian",
-        data: Object.values(dailyData),
+        data: dates.map(d => dailyData[d].total),
         borderColor: "#ff8c00",
         backgroundColor: "rgba(255,140,0,0.3)",
         tension: 0.3
+      },{
+        label: "Transaksi Harian",
+        data: dates.map(d => dailyData[d].transactions),
+        borderColor: "#333333",
+        backgroundColor: "rgba(51,51,51,0.2)",
+        yAxisID: 'y2',
+        tension: 0.3
       }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true },
+        y2: {
+          position: 'right',
+          beginAtZero: true,
+          grid: { drawOnChartArea: false }
+        }
+      }
     }
   });
 }
 
 function renderMonthlyReport() {
+  // monthlyData: { '2025-09': { total: 160000, transactions: 42, daysCount: 10 } }
   const monthlyData = {};
   incomeList.forEach(i => {
     const month = i.date.slice(0, 7);
-    monthlyData[month] = (monthlyData[month] || 0) + i.price;
+    if (!monthlyData[month]) monthlyData[month] = { total: 0, transactions: 0, days: {} };
+    monthlyData[month].total += i.price;
+    monthlyData[month].transactions += 1; // each income entry counts as one transaksi
+    monthlyData[month].days[i.date] = true; // track distinct days
   });
 
   const monthlyTable = document.querySelector("#monthlyTable tbody");
   monthlyTable.innerHTML = "";
-  Object.keys(monthlyData).sort().forEach(m => {
-    const daysInMonth = incomeList.filter(x => x.date.startsWith(m)).length;
-    const avg = (monthlyData[m] / daysInMonth).toFixed(0);
-    monthlyTable.innerHTML += `<tr><td>${m}</td><td>Rp ${monthlyData[m].toLocaleString()}</td><td>Rp ${parseInt(avg).toLocaleString()}</td></tr>`;
+  const months = Object.keys(monthlyData).sort();
+  months.forEach(m => {
+    const info = monthlyData[m];
+    const distinctDays = Object.keys(info.days).length || 1;
+    const avg = Math.round(info.total / distinctDays);
+    monthlyTable.innerHTML += `<tr><td>${m}</td><td>Rp ${info.total.toLocaleString()}</td><td>${info.transactions}</td><td>Rp ${avg.toLocaleString()}</td></tr>`;
   });
 
   const ctx = document.getElementById("monthlyChart").getContext("2d");
@@ -362,12 +403,27 @@ function renderMonthlyReport() {
   monthlyChart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: Object.keys(monthlyData),
+      labels: months,
       datasets: [{
         label: "Penghasilan Bulanan",
-        data: Object.values(monthlyData),
+        data: months.map(m => monthlyData[m].total),
         backgroundColor: "#ffd700"
+      },{
+        label: "Total Transaksi Bulanan",
+        data: months.map(m => monthlyData[m].transactions),
+        backgroundColor: "#ff8c00",
+        yAxisID: 'y2'
       }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true },
+        y2: {
+          position: 'right',
+          beginAtZero: true,
+          grid: { drawOnChartArea: false }
+        }
+      }
     }
   });
 }
@@ -378,26 +434,56 @@ function shareWhatsApp() {
   const profitLoss = totalIncome - totalModal;
   const profitPercent = totalModal > 0 ? ((profitLoss / totalModal) * 100).toFixed(2) : 0;
 
-  let msg = `*VLCrave Business Page*%0A%0A💰 Total Modal: Rp ${totalModal.toLocaleString()}%0A📈 Total Penghasilan: Rp ${totalIncome.toLocaleString()}%0A💹 Laba/Rugi: Rp ${profitLoss.toLocaleString()}%0A📊 Persentase Profit: ${profitPercent}%`;
+  // also include total transactions overall
+  const totalTransactions = incomeList.length;
+
+  let msg = `*VLCrave Business Page*%0A%0A💰 Total Modal: Rp ${totalModal.toLocaleString()}%0A📈 Total Penghasilan: Rp ${totalIncome.toLocaleString()}%0A💹 Laba/Rugi: Rp ${profitLoss.toLocaleString()}%0A📊 Persentase Profit: ${profitPercent}%0A🧾 Total Transaksi: ${totalTransactions}`;
   window.open(`https://wa.me/?text=${msg}`, "_blank");
 }
 
 function exportExcel() {
-  const ws = XLSX.utils.json_to_sheet([...modalList.map(m => ({ Kategori: "Modal", Nama: m.name, Nominal: m.price })), ...incomeList.map(i => ({ Kategori: "Penghasilan", Tanggal: i.date, Nominal: i.price }))]);
+  const ws = XLSX.utils.json_to_sheet([
+    ...modalList.map(m => ({ Kategori: "Modal", Nama: m.name, Nominal: m.price })),
+    ...incomeList.map(i => ({ Kategori: "Penghasilan", Tanggal: i.date, Nominal: i.price }))
+  ]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Laporan VLCrave");
   XLSX.writeFile(wb, "VLCrave_Business_Report.xlsx");
 }
 
 function exportDailyExcel() {
-  const ws = XLSX.utils.table_to_sheet(document.getElementById("dailyTable"));
+  // build sheet with date, total, transactions
+  const month = document.getElementById("filterDaily").value;
+  const dailyData = {};
+  incomeList.forEach(i => {
+    if (!month || i.date.startsWith(month)) {
+      if (!dailyData[i.date]) dailyData[i.date] = { total: 0, transactions: 0 };
+      dailyData[i.date].total += i.price;
+      dailyData[i.date].transactions += 1;
+    }
+  });
+  const rows = Object.keys(dailyData).sort().map(d => ({ Tanggal: d, Penghasilan: dailyData[d].total, Transaksi: dailyData[d].transactions }));
+  const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Laporan Harian");
   XLSX.writeFile(wb, "Laporan_Harian_VLCrave.xlsx");
 }
 
 function exportMonthlyExcel() {
-  const ws = XLSX.utils.table_to_sheet(document.getElementById("monthlyTable"));
+  const monthlyData = {};
+  incomeList.forEach(i => {
+    const m = i.date.slice(0,7);
+    if (!monthlyData[m]) monthlyData[m] = { total:0, transactions:0, days:{} };
+    monthlyData[m].total += i.price;
+    monthlyData[m].transactions += 1;
+    monthlyData[m].days[i.date] = true;
+  });
+  const rows = Object.keys(monthlyData).sort().map(m => {
+    const days = Object.keys(monthlyData[m].days).length || 1;
+    const avg = Math.round(monthlyData[m].total / days);
+    return { Bulan: m, TotalPenghasilan: monthlyData[m].total, TotalTransaksi: monthlyData[m].transactions, RataRataHarian: avg };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Laporan Bulanan");
   XLSX.writeFile(wb, "Laporan_Bulanan_VLCrave.xlsx");
