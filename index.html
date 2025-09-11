@@ -7,112 +7,153 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0; padding: 0;
-      background: #f4f7fa; color: #333;
-    }
-    header {
-      background: #ff6600; color: #fff;
-      text-align: center; padding: 1rem;
-    }
-    .container {
-      max-width: 1000px; margin: auto;
-      padding: 1rem;
-    }
-    h2 { margin-top: 2rem; color: #ff6600; }
-    form, .card {
-      background: #fff; padding: 1rem; margin: 1rem 0;
-      border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    input, select, button {
-      padding: .5rem; margin: .3rem 0;
-      border: 1px solid #ddd; border-radius: 4px;
-      width: 100%;
-    }
-    button {
-      background: #ff6600; color: #fff; border: none;
-      cursor: pointer; font-weight: bold;
-    }
-    button:hover { background: #e65c00; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
-      gap: 1rem;
-    }
-    .stat {
-      background: #fff; padding: 1rem;
-      border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    .stat h3 { margin: 0; font-size: 1.5rem; }
+    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f7fa; color:#333; }
+    header { background:#ff6600; color:#fff; text-align:center; padding:1rem; }
+    nav { display:flex; justify-content:center; background:#fff; border-bottom:1px solid #ddd; }
+    nav button { flex:1; padding:1rem; border:none; cursor:pointer; background:#fff; font-weight:bold; }
+    nav button.active { background:#ff6600; color:#fff; }
+    .container { max-width:1100px; margin:auto; padding:1rem; }
+    h2 { margin-top:2rem; color:#ff6600; }
+    form, .card { background:#fff; padding:1rem; margin:1rem 0; border-radius:8px;
+      box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+    input, select, button { padding:.5rem; margin:.3rem 0; border:1px solid #ddd; border-radius:4px; width:100%; }
+    button { background:#ff6600; color:#fff; border:none; cursor:pointer; font-weight:bold; }
+    button:hover { background:#e65c00; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; }
+    .stat { background:#fff; padding:1rem; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center; }
+    .stat h3 { margin:0; font-size:1.5rem; }
+    ul { padding-left:20px; }
+    li { margin-bottom:6px; }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    table { width:100%; border-collapse:collapse; margin-top:1rem; }
+    th, td { border:1px solid #ddd; padding:.6rem; text-align:left; }
+    th { background:#ff6600; color:#fff; }
   </style>
 </head>
 <body>
   <header>
-    <h1><i class="fa-solid fa-store"></i> CraveStreet - Sistem Keuangan</h1>
+    <h1><i class="fa-solid fa-store"></i> CraveStreet - Sistem Keuangan (POS)</h1>
   </header>
+  <nav>
+    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="cashflow">Arus Kas</button>
+    <button class="tab-btn" data-tab="transactions">Riwayat Transaksi</button>
+  </nav>
   <div class="container">
 
-    <!-- Statistik -->
-    <div class="grid">
-      <div class="stat">
-        <i class="fa-solid fa-wallet fa-2x"></i>
-        <h3 id="kas">Rp 0</h3>
-        <p>Arus Kas (Realtime)</p>
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="tab-content active">
+      <div class="grid">
+        <div class="stat">
+          <i class="fa-solid fa-wallet fa-2x"></i>
+          <h3 id="kas">Rp 0</h3>
+          <p>Arus Kas (Realtime)</p>
+        </div>
+        <div class="stat">
+          <i class="fa-solid fa-chart-line fa-2x"></i>
+          <h3 id="laba">Rp 0</h3>
+          <p>Laba Bersih</p>
+        </div>
       </div>
-      <div class="stat">
-        <i class="fa-solid fa-chart-line fa-2x"></i>
-        <h3 id="laba">Rp 0</h3>
-        <p>Laba Bersih</p>
+
+      <!-- Penjualan -->
+      <h2><i class="fa-solid fa-cash-register"></i> Pencatatan Penjualan</h2>
+      <form id="salesForm">
+        <select id="salesItem" required></select>
+        <input type="number" id="salesQty" placeholder="Jumlah" required>
+        <button type="submit"><i class="fa-solid fa-cart-plus"></i> Tambah Penjualan</button>
+      </form>
+
+      <!-- Pengeluaran -->
+      <h2><i class="fa-solid fa-coins"></i> Pencatatan Pengeluaran</h2>
+      <form id="expenseForm">
+        <input type="text" id="expenseDesc" placeholder="Keterangan" required>
+        <input type="number" id="expenseAmount" placeholder="Jumlah Pengeluaran" required>
+        <button type="submit">+ Tambah Pengeluaran</button>
+      </form>
+
+      <!-- Kredit -->
+      <h2><i class="fa-solid fa-hand-holding-dollar"></i> Pencatatan Kredit/Piutang</h2>
+      <form id="creditForm">
+        <input type="text" id="creditName" placeholder="Nama Pelanggan" required>
+        <input type="number" id="creditAmount" placeholder="Jumlah Piutang" required>
+        <button type="submit">+ Tambah Piutang</button>
+      </form>
+
+      <!-- Stok -->
+      <h2><i class="fa-solid fa-boxes-stacked"></i> Manajemen Stok</h2>
+      <form id="stockForm">
+        <input type="text" id="stockItem" placeholder="Nama Barang" required>
+        <input type="number" id="stockQty" placeholder="Jumlah Stok" required>
+        <input type="number" id="stockPrice" placeholder="Harga Satuan (Rp)" required>
+        <select id="stockCategory" required></select>
+        <button type="submit">+ Tambah / Update Stok</button>
+      </form>
+      <div class="card">
+        <h3>Daftar Stok:</h3>
+        <ul id="stockList"></ul>
       </div>
+
+      <!-- Kategori -->
+      <h2><i class="fa-solid fa-tags"></i> Kelola Kategori</h2>
+      <form id="categoryForm">
+        <input type="text" id="categoryName" placeholder="Nama Kategori" required>
+        <button type="submit">+ Tambah Kategori</button>
+      </form>
+      <ul id="categoryList"></ul>
     </div>
 
-    <!-- Pemasukan -->
-    <h2><i class="fa-solid fa-money-bill-wave"></i> Pencatatan Pemasukan</h2>
-    <form id="incomeForm">
-      <input type="text" id="incomeItem" placeholder="Nama Barang" required>
-      <input type="number" id="incomeQty" placeholder="Jumlah" required>
-      <input type="number" id="incomePrice" placeholder="Harga Satuan" required>
-      <button type="submit">+ Tambah Pemasukan</button>
-    </form>
-
-    <!-- Pengeluaran -->
-    <h2><i class="fa-solid fa-coins"></i> Pencatatan Pengeluaran</h2>
-    <form id="expenseForm">
-      <input type="text" id="expenseDesc" placeholder="Keterangan" required>
-      <input type="number" id="expenseAmount" placeholder="Jumlah Pengeluaran" required>
-      <button type="submit">+ Tambah Pengeluaran</button>
-    </form>
-
-    <!-- Kredit/Piutang -->
-    <h2><i class="fa-solid fa-hand-holding-dollar"></i> Pencatatan Kredit/Piutang</h2>
-    <form id="creditForm">
-      <input type="text" id="creditName" placeholder="Nama Pelanggan" required>
-      <input type="number" id="creditAmount" placeholder="Jumlah Piutang" required>
-      <button type="submit">+ Tambah Piutang</button>
-    </form>
-
-    <!-- Stok Barang -->
-    <h2><i class="fa-solid fa-boxes-stacked"></i> Manajemen Stok</h2>
-    <form id="stockForm">
-      <input type="text" id="stockItem" placeholder="Nama Barang" required>
-      <input type="number" id="stockQty" placeholder="Jumlah Stok" required>
-      <button type="submit">+ Tambah / Update Stok</button>
-    </form>
-    <div class="card">
-      <h3>Daftar Stok:</h3>
-      <ul id="stockList"></ul>
+    <!-- ARUS KAS -->
+    <div id="cashflow" class="tab-content">
+      <h2><i class="fa-solid fa-wallet"></i> Arus Kas</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Jenis</th>
+            <th>Keterangan</th>
+            <th>Jumlah</th>
+          </tr>
+        </thead>
+        <tbody id="cashflowTable"></tbody>
+      </table>
     </div>
 
+    <!-- TRANSAKSI -->
+    <div id="transactions" class="tab-content">
+      <h2><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Transaksi</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Jenis</th>
+            <th>Item</th>
+            <th>Jumlah</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="transactionTable"></tbody>
+      </table>
+    </div>
   </div>
 
   <script type="module">
-    // Import Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+    // Tab Navigasi
+    document.querySelectorAll(".tab-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(tab=>tab.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab).classList.add("active");
+      });
+    });
 
-    // Konfigurasi Firebase
+    // Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot, updateDoc, deleteDoc } 
+      from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
       authDomain: "crave-street-id.firebaseapp.com",
@@ -123,98 +164,175 @@
       measurementId: "G-WCRQGLW47B"
     };
 
-    // Inisialisasi
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Realtime update Arus Kas & Laba
+    // Statistik
     const kasEl = document.getElementById("kas");
     const labaEl = document.getElementById("laba");
 
     onSnapshot(collection(db, "finance"), (snapshot) => {
       let totalIncome = 0, totalExpense = 0;
+      const cashflowTable = document.getElementById("cashflowTable");
+      cashflowTable.innerHTML = "";
       snapshot.forEach(doc => {
         const data = doc.data();
         if (data.type === "income") totalIncome += data.amount;
         if (data.type === "expense") totalExpense += data.amount;
+        cashflowTable.innerHTML += `
+          <tr>
+            <td>${new Date(data.date.seconds*1000).toLocaleString()}</td>
+            <td>${data.type}</td>
+            <td>${data.desc || data.item || "-"}</td>
+            <td>Rp ${data.amount.toLocaleString()}</td>
+          </tr>`;
       });
       const netProfit = totalIncome - totalExpense;
       kasEl.innerText = "Rp " + (totalIncome - totalExpense).toLocaleString();
       labaEl.innerText = "Rp " + netProfit.toLocaleString();
     });
 
-    // Pemasukan (Income) - Kurangi Stok
-    document.getElementById("incomeForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const item = incomeItem.value;
-      const qty = parseInt(incomeQty.value);
-      const price = parseInt(incomePrice.value);
-      const total = qty * price;
-
-      await addDoc(collection(db, "finance"), {
-        type: "income", item, qty, price, amount: total, date: new Date()
-      });
-
-      // Kurangi stok
-      const stockRef = doc(db, "stocks", item);
-      const stockSnap = await getDoc(stockRef);
-      if (stockSnap.exists()) {
-        await updateDoc(stockRef, { qty: stockSnap.data().qty - qty });
-      }
-
-      Swal.fire("Berhasil!", "Pemasukan dicatat & stok berkurang.", "success");
-      incomeForm.reset();
+    // Notifikasi Toast
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 4000,
+      timerProgressBar: true
     });
 
-    // Pengeluaran (Expense)
+    // Penjualan
+    const salesForm = document.getElementById("salesForm");
+    const salesItem = document.getElementById("salesItem");
+    const salesQty = document.getElementById("salesQty");
+
+    onSnapshot(collection(db, "stocks"), (snapshot) => {
+      salesItem.innerHTML = "<option value='' disabled selected>Pilih Produk</option>";
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        if (d.category === "produk") {
+          salesItem.innerHTML += `<option value="${doc.id}" data-price="${d.price}" data-qty="${d.qty}">
+            ${d.name} - Rp ${d.price} (stok: ${d.qty})
+          </option>`;
+        }
+      });
+    });
+
+    salesForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = salesItem.value;
+      const qty = parseInt(salesQty.value);
+      const price = parseInt(salesItem.selectedOptions[0].dataset.price);
+      const stok = parseInt(salesItem.selectedOptions[0].dataset.qty);
+      if (qty > stok) {
+        return Swal.fire({ icon:"error", title:"Stok kurang!", text:"Jumlah melebihi stok tersedia." });
+      }
+      const total = qty * price;
+
+      await addDoc(collection(db, "finance"), { type:"income", item:id, qty, price, amount:total, date:new Date() });
+      await addDoc(collection(db, "transactions"), { type:"penjualan", item:id, qty, price, total, date:new Date() });
+
+      const stockRef = doc(db, "stocks", id);
+      await updateDoc(stockRef, { qty: stok - qty });
+
+      Swal.fire({ icon:"success", title:"Penjualan dicatat", text:`${id} x${qty} = Rp ${total.toLocaleString()}` });
+      salesForm.reset();
+    });
+
+    // Pengeluaran
     document.getElementById("expenseForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const desc = expenseDesc.value;
       const amount = parseInt(expenseAmount.value);
-
-      await addDoc(collection(db, "finance"), {
-        type: "expense", desc, amount, date: new Date()
-      });
-
-      Swal.fire("Berhasil!", "Pengeluaran dicatat.", "success");
+      await addDoc(collection(db, "finance"), { type:"expense", desc, amount, date:new Date() });
+      await addDoc(collection(db, "transactions"), { type:"pengeluaran", item:desc, qty:1, price:amount, total:amount, date:new Date() });
+      Swal.fire({ icon:"success", title:"Pengeluaran dicatat" });
       expenseForm.reset();
     });
 
-    // Kredit/Piutang
+    // Kredit
     document.getElementById("creditForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const name = creditName.value;
       const amount = parseInt(creditAmount.value);
-
-      await addDoc(collection(db, "credits"), {
-        name, amount, status: "belum lunas", date: new Date()
-      });
-
-      Swal.fire("Berhasil!", "Piutang dicatat.", "success");
+      await addDoc(collection(db, "credits"), { name, amount, status:"belum lunas", date:new Date() });
+      await addDoc(collection(db, "transactions"), { type:"piutang", item:name, qty:1, price:amount, total:amount, date:new Date() });
+      Swal.fire({ icon:"success", title:"Piutang dicatat" });
       creditForm.reset();
     });
 
-    // Manajemen Stok
+    // Stok
     const stockList = document.getElementById("stockList");
+    const stockCategory = document.getElementById("stockCategory");
+
     document.getElementById("stockForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const item = stockItem.value;
+      const name = stockItem.value;
       const qty = parseInt(stockQty.value);
-
-      await setDoc(doc(db, "stocks", item), { qty });
-      Swal.fire("Berhasil!", "Stok diperbarui.", "success");
+      const price = parseInt(stockPrice.value);
+      const cat = stockCategory.value;
+      await setDoc(doc(db, "stocks", name), { name, qty, price, category:cat });
+      Swal.fire({ icon:"success", title:"Stok diperbarui" });
       stockForm.reset();
     });
 
-    // Realtime stok
     onSnapshot(collection(db, "stocks"), (snapshot) => {
       stockList.innerHTML = "";
       snapshot.forEach(doc => {
-        const data = doc.data();
-        stockList.innerHTML += `<li>${doc.id}: ${data.qty} pcs</li>`;
+        const d = doc.data();
+        stockList.innerHTML += `<li>${d.name} [${d.category}] - ${d.qty} pcs @Rp ${d.price}</li>`;
+
+        // 🚨 Notifikasi stok rendah
+        if (d.qty < 5) {
+          Toast.fire({
+            icon: "warning",
+            title: `Stok menipis: ${d.name} tersisa ${d.qty}`
+          });
+        }
       });
     });
 
+    // Kategori
+    const catList = document.getElementById("categoryList");
+    document.getElementById("categoryForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = categoryName.value;
+      await addDoc(collection(db, "categories"), { name });
+      Swal.fire({ icon:"success", title:"Kategori ditambah" });
+      categoryForm.reset();
+    });
+
+    onSnapshot(collection(db, "categories"), (snapshot) => {
+      stockCategory.innerHTML = "<option value='' disabled selected>Pilih Kategori</option>";
+      catList.innerHTML = "";
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        stockCategory.innerHTML += `<option value="${d.name}">${d.name}</option>`;
+        catList.innerHTML += `<li>${d.name} <button onclick="deleteCategory('${doc.id}')">Hapus</button></li>`;
+      });
+    });
+
+    window.deleteCategory = async (id) => {
+      await deleteDoc(doc(db, "categories", id));
+      Swal.fire({ icon:"success", title:"Kategori dihapus" });
+    };
+
+    // Riwayat Transaksi
+    onSnapshot(collection(db, "transactions"), (snapshot) => {
+      const table = document.getElementById("transactionTable");
+      table.innerHTML = "";
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        table.innerHTML += `
+          <tr>
+            <td>${new Date(d.date.seconds*1000).toLocaleString()}</td>
+            <td>${d.type}</td>
+            <td>${d.item}</td>
+            <td>${d.qty}</td>
+            <td>Rp ${d.total.toLocaleString()}</td>
+          </tr>`;
+      });
+    });
   </script>
 </body>
 </html>
