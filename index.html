@@ -16,7 +16,7 @@
     .container { padding:20px; }
     .card { background:#fff; padding:15px; border-radius:8px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
     .dark .card { background:#1e1e1e; color:#f1f1f1; }
-    .tabs { display:flex; gap:10px; margin-bottom:20px; }
+    .tabs { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
     .tabs button { padding:10px 15px; border:none; cursor:pointer; border-radius:5px; background:#ddd; }
     .tabs button.active { background:#333; color:#fff; }
     table { width:100%; border-collapse:collapse; margin-top:10px; }
@@ -32,6 +32,7 @@
       <a onclick="setTab('cashflow')"><i class="fa-solid fa-money-bill-transfer"></i> Arus Kas</a>
       <a onclick="setTab('transactions')"><i class="fa-solid fa-list"></i> Riwayat</a>
       <a onclick="setTab('leaderboard')"><i class="fa-solid fa-trophy"></i> Leaderboard</a>
+      <a onclick="setTab('stok')"><i class="fa-solid fa-boxes-stacked"></i> Stok</a>
       <a onclick="toggleDark()"><i class="fa-solid fa-moon"></i></a>
     </nav>
   </header>
@@ -42,6 +43,7 @@
       <button onclick="setTab('cashflow')" id="tab-cashflow">Arus Kas</button>
       <button onclick="setTab('transactions')" id="tab-transactions">Riwayat Transaksi</button>
       <button onclick="setTab('leaderboard')" id="tab-leaderboard">Leaderboard</button>
+      <button onclick="setTab('stok')" id="tab-stok">Stok Barang</button>
     </div>
 
     <!-- Dashboard -->
@@ -83,6 +85,16 @@
       </table>
     </div>
 
+    <!-- Manajemen Stok -->
+    <div id="stok" class="card" style="display:none;">
+      <h2><i class="fa-solid fa-box"></i> Manajemen Stok Barang</h2>
+      <button onclick="addStok()">+ Tambah Barang</button>
+      <table>
+        <thead><tr><th>Nama</th><th>Harga</th><th>Jumlah</th><th>Aksi</th></tr></thead>
+        <tbody id="stok-list"></tbody>
+      </table>
+    </div>
+
     <!-- Form Input -->
     <div class="card">
       <h2><i class="fa-solid fa-pen-to-square"></i> Input Transaksi</h2>
@@ -96,7 +108,7 @@
   <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
@@ -142,18 +154,31 @@
         preConfirm:()=>{
           return {
             cust:document.getElementById("cust").value,
-            jumlah:document.getElementById("jumlah").value||1,
+            jumlah:parseInt(document.getElementById("jumlah").value)||1,
             nominal:parseInt(document.getElementById("nominal").value)||0,
-            produk:[...document.querySelectorAll("input[type=checkbox]:checked")].map(cb=>cb.dataset.nama)
+            produk:[...document.querySelectorAll("input[type=checkbox]:checked")].map(cb=>({id:cb.value,nama:cb.dataset.nama}))
           }
         }
       }).then(async res=>{
         if(res.isConfirmed){
+          // update stok
+          for(let p of res.value.produk){
+            let stokDoc=doc(db,"stok",p.id);
+            let jumlahBaru=(res.value.jumlah);
+            let snap=await getDocs(colStok);
+            snap.forEach(async d=>{
+              if(d.id==p.id){
+                let s=d.data().jumlah - jumlahBaru;
+                if(s<0) s=0;
+                await updateDoc(stokDoc,{jumlah:s});
+              }
+            });
+          }
           await addDoc(colTrans,{
             jenis:"income",
             customer:res.value.cust,
             nominal:res.value.nominal,
-            produk:res.value.produk,
+            produk:res.value.produk.map(x=>x.nama),
             tgl:new Date()
           });
           Swal.fire("Berhasil","Penjualan dicatat!","success");
@@ -186,6 +211,55 @@
       });
     }
 
+    // CRUD Stok
+    function addStok(){
+      Swal.fire({
+        title:"Tambah Barang",
+        html:`<input id="nama" class="swal2-input" placeholder="Nama Barang">
+              <input id="harga" class="swal2-input" type="number" placeholder="Harga">
+              <input id="jumlah" class="swal2-input" type="number" placeholder="Jumlah">`,
+        preConfirm:()=>{
+          return {
+            nama:document.getElementById("nama").value,
+            harga:parseInt(document.getElementById("harga").value)||0,
+            jumlah:parseInt(document.getElementById("jumlah").value)||0
+          }
+        }
+      }).then(async res=>{
+        if(res.isConfirmed){
+          await addDoc(colStok,res.value);
+          Swal.fire("Berhasil","Barang ditambahkan!","success");
+        }
+      });
+    }
+
+    async function editStok(id,nama,harga,jumlah){
+      Swal.fire({
+        title:"Edit Barang",
+        html:`<input id="nama" class="swal2-input" value="${nama}">
+              <input id="harga" class="swal2-input" type="number" value="${harga}">
+              <input id="jumlah" class="swal2-input" type="number" value="${jumlah}">`,
+        preConfirm:()=>{
+          return {
+            nama:document.getElementById("nama").value,
+            harga:parseInt(document.getElementById("harga").value)||0,
+            jumlah:parseInt(document.getElementById("jumlah").value)||0
+          }
+        }
+      }).then(async res=>{
+        if(res.isConfirmed){
+          await updateDoc(doc(db,"stok",id),res.value);
+          Swal.fire("Berhasil","Barang diupdate!","success");
+        }
+      });
+    }
+
+    async function deleteStok(id){
+      if(confirm("Yakin hapus barang ini?")){
+        await deleteDoc(doc(db,"stok",id));
+      }
+    }
+
     // Listener transaksi realtime
     onSnapshot(query(colTrans,orderBy("tgl","desc")),(snap)=>{
       let rows="";
@@ -211,6 +285,21 @@
       loadStats();
     });
 
+    // Listener stok realtime
+    onSnapshot(colStok,(snap)=>{
+      let rows="";
+      let kurang=false;
+      snap.forEach(doc=>{
+        let d=doc.data();
+        rows+=`<tr><td>${d.nama}</td><td>Rp${d.harga}</td><td>${d.jumlah}</td>
+        <td><button onclick="editStok('${doc.id}','${d.nama}',${d.harga},${d.jumlah})">Edit</button>
+        <button onclick="deleteStok('${doc.id}')">Hapus</button></td></tr>`;
+        if(d.jumlah<5) kurang=true;
+      });
+      document.getElementById("stok-list").innerHTML=rows;
+      document.getElementById("notif").style.display=kurang?"block":"none";
+    });
+
     async function loadStats(){
       let filter=document.getElementById("filter").value;
       let snap=await getDocs(colTrans);
@@ -222,7 +311,7 @@
         let include=false;
         if(filter=="daily"){ include=t.toDateString()==now.toDateString(); }
         if(filter=="weekly"){
-          let weekStart=new Date(now.setDate(now.getDate()-now.getDay()));
+          let weekStart=new Date(); weekStart.setDate(now.getDate()-now.getDay());
           include=t>=weekStart;
         }
         if(filter=="monthly"){ include=t.getMonth()==(new Date()).getMonth(); }
