@@ -7,62 +7,143 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f7fa; color:#333; }
-    header { background:#ff6600; color:#fff; text-align:center; padding:1rem; }
-    nav { display:flex; justify-content:center; background:#fff; border-bottom:1px solid #ddd; }
-    nav button { flex:1; padding:1rem; border:none; cursor:pointer; background:#fff; font-weight:bold; }
-    nav button.active { background:#ff6600; color:#fff; }
-    .container { max-width:1100px; margin:auto; padding:1rem; }
-    h2 { margin-top:2rem; color:#ff6600; }
-    form, .card { background:#fff; padding:1rem; margin:1rem 0; border-radius:8px;
-      box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-    input, select, button { padding:.5rem; margin:.3rem 0; border:1px solid #ddd; border-radius:4px; width:100%; }
-    button { background:#ff6600; color:#fff; border:none; cursor:pointer; font-weight:bold; }
-    button:hover { background:#e65c00; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; }
-    .stat { background:#fff; padding:1rem; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1); text-align:center; }
-    .stat h3 { margin:0; font-size:1.5rem; }
-    ul { padding-left:20px; }
-    li { margin-bottom:6px; }
-    .tab-content { display:none; }
-    .tab-content.active { display:block; }
-    table { width:100%; border-collapse:collapse; margin-top:1rem; }
-    th, td { border:1px solid #ddd; padding:.6rem; text-align:left; }
-    th { background:#ff6600; color:#fff; }
+    :root {
+      --primary: #ff6600;
+      --bg: #f4f7fa;
+      --text: #333;
+      --card: #fff;
+    }
+    body.dark {
+      --primary: #ff944d;
+      --bg: #1e1e1e;
+      --text: #f1f1f1;
+      --card: #2a2a2a;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 0;
+      background: var(--bg); color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
+    header {
+      background: var(--primary); color: #fff;
+      text-align: center; padding: 1rem;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .tabs {
+      display: flex; justify-content: center; gap: 1rem;
+      margin-top: .5rem;
+    }
+    .tabs button {
+      background: #fff; border: none; padding: .5rem 1rem;
+      border-radius: 5px; cursor: pointer; font-weight: bold;
+    }
+    .tabs button.active {
+      background: var(--primary); color: #fff;
+    }
+    .container {
+      max-width: 1100px; margin: auto;
+      padding: 1rem;
+    }
+    h2 { margin-top: 2rem; color: var(--primary); }
+    form, .card {
+      background: var(--card); padding: 1rem; margin: 1rem 0;
+      border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    input, select, button {
+      padding: .5rem; margin: .3rem 0;
+      border: 1px solid #ddd; border-radius: 4px;
+      width: 100%;
+    }
+    button {
+      background: var(--primary); color: #fff; border: none;
+      cursor: pointer; font-weight: bold;
+    }
+    button:hover { opacity: .9; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+      gap: 1rem;
+    }
+    .stat {
+      background: var(--card); padding: 1rem;
+      border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .stat h3 { margin: 0; font-size: 1.5rem; }
+    .floating {
+      position: fixed; bottom: 20px; right: 20px;
+      background: crimson; color: #fff; padding: 10px 15px;
+      border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,.2);
+      display: none; z-index: 1000;
+    }
+    .dark-toggle {
+      position: absolute; right: 10px; top: 10px;
+      cursor: pointer; font-size: 1.2rem;
+    }
+    .filter {
+      margin: 1rem 0; text-align: right;
+    }
+    .filter select {
+      width: auto; padding: .5rem;
+    }
+    section { display: none; }
+    section.active { display: block; }
   </style>
 </head>
 <body>
   <header>
-    <h1><i class="fa-solid fa-store"></i> CraveStreet - Sistem Keuangan (POS)</h1>
+    <h1><i class="fa-solid fa-store"></i> CraveStreet - Sistem Keuangan</h1>
+    <div class="dark-toggle"><i class="fa-solid fa-moon"></i></div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn" data-tab="cashflow">Arus Kas</button>
+      <button class="tab-btn" data-tab="history">Riwayat Transaksi</button>
+    </div>
   </header>
-  <nav>
-    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
-    <button class="tab-btn" data-tab="cashflow">Arus Kas</button>
-    <button class="tab-btn" data-tab="transactions">Riwayat Transaksi</button>
-  </nav>
-  <div class="container">
 
-    <!-- DASHBOARD -->
-    <div id="dashboard" class="tab-content active">
+  <div class="container">
+    <!-- Dashboard -->
+    <section id="dashboard" class="active">
+      <div class="filter">
+        <label>Filter: 
+          <select id="filterRange">
+            <option value="all">Semua</option>
+            <option value="day">Harian</option>
+            <option value="week">Mingguan</option>
+            <option value="month">Bulanan</option>
+          </select>
+        </label>
+      </div>
       <div class="grid">
         <div class="stat">
           <i class="fa-solid fa-wallet fa-2x"></i>
           <h3 id="kas">Rp 0</h3>
-          <p>Arus Kas (Realtime)</p>
+          <p>Arus Kas</p>
         </div>
         <div class="stat">
           <i class="fa-solid fa-chart-line fa-2x"></i>
           <h3 id="laba">Rp 0</h3>
           <p>Laba Bersih</p>
         </div>
+        <div class="stat">
+          <i class="fa-solid fa-money-bill-trend-up fa-2x"></i>
+          <h3 id="totalIncome">Rp 0</h3>
+          <p>Total Penjualan</p>
+        </div>
+        <div class="stat">
+          <i class="fa-solid fa-money-bill-transfer fa-2x"></i>
+          <h3 id="totalExpense">Rp 0</h3>
+          <p>Total Pengeluaran</p>
+        </div>
       </div>
 
       <!-- Penjualan -->
-      <h2><i class="fa-solid fa-cash-register"></i> Pencatatan Penjualan</h2>
-      <form id="salesForm">
-        <select id="salesItem" required></select>
-        <input type="number" id="salesQty" placeholder="Jumlah" required>
-        <button type="submit"><i class="fa-solid fa-cart-plus"></i> Tambah Penjualan</button>
+      <h2><i class="fa-solid fa-cart-shopping"></i> Pencatatan Penjualan</h2>
+      <form id="incomeForm">
+        <select id="incomeItem" required></select>
+        <input type="number" id="incomeQty" placeholder="Jumlah Terjual" required>
+        <button type="submit">+ Tambah Penjualan</button>
       </form>
 
       <!-- Pengeluaran -->
@@ -73,86 +154,46 @@
         <button type="submit">+ Tambah Pengeluaran</button>
       </form>
 
-      <!-- Kredit -->
-      <h2><i class="fa-solid fa-hand-holding-dollar"></i> Pencatatan Kredit/Piutang</h2>
+      <!-- Kredit/Piutang -->
+      <h2><i class="fa-solid fa-hand-holding-dollar"></i> Kredit/Piutang</h2>
       <form id="creditForm">
         <input type="text" id="creditName" placeholder="Nama Pelanggan" required>
         <input type="number" id="creditAmount" placeholder="Jumlah Piutang" required>
         <button type="submit">+ Tambah Piutang</button>
       </form>
 
-      <!-- Stok -->
+      <!-- Stok Barang -->
       <h2><i class="fa-solid fa-boxes-stacked"></i> Manajemen Stok</h2>
       <form id="stockForm">
-        <input type="text" id="stockItem" placeholder="Nama Barang" required>
+        <input type="text" id="stockItem" placeholder="Nama Produk" required>
         <input type="number" id="stockQty" placeholder="Jumlah Stok" required>
-        <input type="number" id="stockPrice" placeholder="Harga Satuan (Rp)" required>
-        <select id="stockCategory" required></select>
+        <input type="number" id="stockPrice" placeholder="Harga Jual" required>
         <button type="submit">+ Tambah / Update Stok</button>
       </form>
       <div class="card">
         <h3>Daftar Stok:</h3>
         <ul id="stockList"></ul>
       </div>
+    </section>
 
-      <!-- Kategori -->
-      <h2><i class="fa-solid fa-tags"></i> Kelola Kategori</h2>
-      <form id="categoryForm">
-        <input type="text" id="categoryName" placeholder="Nama Kategori" required>
-        <button type="submit">+ Tambah Kategori</button>
-      </form>
-      <ul id="categoryList"></ul>
-    </div>
-
-    <!-- ARUS KAS -->
-    <div id="cashflow" class="tab-content">
+    <!-- Arus Kas -->
+    <section id="cashflow">
       <h2><i class="fa-solid fa-wallet"></i> Arus Kas</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Tanggal</th>
-            <th>Jenis</th>
-            <th>Keterangan</th>
-            <th>Jumlah</th>
-          </tr>
-        </thead>
-        <tbody id="cashflowTable"></tbody>
-      </table>
-    </div>
+      <div id="cashFlowList" class="card"></div>
+    </section>
 
-    <!-- TRANSAKSI -->
-    <div id="transactions" class="tab-content">
+    <!-- Riwayat Transaksi -->
+    <section id="history">
       <h2><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Transaksi</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Tanggal</th>
-            <th>Jenis</th>
-            <th>Item</th>
-            <th>Jumlah</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody id="transactionTable"></tbody>
-      </table>
-    </div>
+      <div id="historyList" class="card"></div>
+    </section>
   </div>
 
-  <script type="module">
-    // Tab Navigasi
-    document.querySelectorAll(".tab-btn").forEach(btn=>{
-      btn.addEventListener("click",()=>{
-        document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
-        document.querySelectorAll(".tab-content").forEach(tab=>tab.classList.remove("active"));
-        btn.classList.add("active");
-        document.getElementById(btn.dataset.tab).classList.add("active");
-      });
-    });
+  <div class="floating" id="lowStockAlert"></div>
 
-    // Firebase
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot, updateDoc, deleteDoc } 
-      from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot, getDoc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
@@ -161,177 +202,156 @@
       storageBucket: "crave-street-id.firebasestorage.app",
       messagingSenderId: "221955592583",
       appId: "1:221955592583:web:43dc59d791e750095cc322",
-      measurementId: "G-WCRQGLW47B"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Statistik
     const kasEl = document.getElementById("kas");
     const labaEl = document.getElementById("laba");
+    const totalIncomeEl = document.getElementById("totalIncome");
+    const totalExpenseEl = document.getElementById("totalExpense");
+    const filterRange = document.getElementById("filterRange");
 
-    onSnapshot(collection(db, "finance"), (snapshot) => {
-      let totalIncome = 0, totalExpense = 0;
-      const cashflowTable = document.getElementById("cashflowTable");
-      cashflowTable.innerHTML = "";
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.type === "income") totalIncome += data.amount;
-        if (data.type === "expense") totalExpense += data.amount;
-        cashflowTable.innerHTML += `
-          <tr>
-            <td>${new Date(data.date.seconds*1000).toLocaleString()}</td>
-            <td>${data.type}</td>
-            <td>${data.desc || data.item || "-"}</td>
-            <td>Rp ${data.amount.toLocaleString()}</td>
-          </tr>`;
+    function filterByDate(date, range) {
+      const now = new Date();
+      const d = new Date(date.seconds*1000);
+      if (range==="day") return d.toDateString()===now.toDateString();
+      if (range==="week") {
+        const start=new Date(now); start.setDate(now.getDate()-7);
+        return d>=start && d<=now;
+      }
+      if (range==="month") return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+      return true;
+    }
+
+    function refreshStats(range="all") {
+      onSnapshot(collection(db, "finance"), (snapshot) => {
+        let totalIncome=0,totalExpense=0;
+        snapshot.forEach(doc=>{
+          const data=doc.data();
+          if (!filterByDate(data.date,range)) return;
+          if(data.type==="income") totalIncome+=data.amount;
+          if(data.type==="expense") totalExpense+=data.amount;
+        });
+        const netProfit=totalIncome-totalExpense;
+        kasEl.innerText="Rp "+(totalIncome-totalExpense).toLocaleString();
+        labaEl.innerText="Rp "+netProfit.toLocaleString();
+        totalIncomeEl.innerText="Rp "+totalIncome.toLocaleString();
+        totalExpenseEl.innerText="Rp "+totalExpense.toLocaleString();
       });
-      const netProfit = totalIncome - totalExpense;
-      kasEl.innerText = "Rp " + (totalIncome - totalExpense).toLocaleString();
-      labaEl.innerText = "Rp " + netProfit.toLocaleString();
-    });
+    }
 
-    // Notifikasi Toast
-    const Toast = Swal.mixin({
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 4000,
-      timerProgressBar: true
-    });
+    filterRange.addEventListener("change",()=>refreshStats(filterRange.value));
+    refreshStats();
 
     // Penjualan
-    const salesForm = document.getElementById("salesForm");
-    const salesItem = document.getElementById("salesItem");
-    const salesQty = document.getElementById("salesQty");
-
-    onSnapshot(collection(db, "stocks"), (snapshot) => {
-      salesItem.innerHTML = "<option value='' disabled selected>Pilih Produk</option>";
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        if (d.category === "produk") {
-          salesItem.innerHTML += `<option value="${doc.id}" data-price="${d.price}" data-qty="${d.qty}">
-            ${d.name} - Rp ${d.price} (stok: ${d.qty})
-          </option>`;
-        }
-      });
-    });
-
-    salesForm.addEventListener("submit", async (e) => {
+    const incomeItem=document.getElementById("incomeItem");
+    document.getElementById("incomeForm").addEventListener("submit",async(e)=>{
       e.preventDefault();
-      const id = salesItem.value;
-      const qty = parseInt(salesQty.value);
-      const price = parseInt(salesItem.selectedOptions[0].dataset.price);
-      const stok = parseInt(salesItem.selectedOptions[0].dataset.qty);
-      if (qty > stok) {
-        return Swal.fire({ icon:"error", title:"Stok kurang!", text:"Jumlah melebihi stok tersedia." });
+      const item=incomeItem.value;
+      const qty=parseInt(incomeQty.value);
+
+      const stockRef=doc(db,"stocks",item);
+      const stockSnap=await getDoc(stockRef);
+      if(!stockSnap.exists()||stockSnap.data().qty<qty){
+        Swal.fire("Gagal","Stok tidak mencukupi!","error");
+        return;
       }
-      const total = qty * price;
+      const price=stockSnap.data().price;
+      const total=qty*price;
 
-      await addDoc(collection(db, "finance"), { type:"income", item:id, qty, price, amount:total, date:new Date() });
-      await addDoc(collection(db, "transactions"), { type:"penjualan", item:id, qty, price, total, date:new Date() });
+      await addDoc(collection(db,"finance"),{
+        type:"income",item,qty,price,amount:total,date:new Date()
+      });
 
-      const stockRef = doc(db, "stocks", id);
-      await updateDoc(stockRef, { qty: stok - qty });
-
-      Swal.fire({ icon:"success", title:"Penjualan dicatat", text:`${id} x${qty} = Rp ${total.toLocaleString()}` });
-      salesForm.reset();
+      await updateDoc(stockRef,{qty:stockSnap.data().qty-qty});
+      Swal.fire("Berhasil!","Penjualan dicatat & stok berkurang.","success");
+      incomeForm.reset();
     });
 
     // Pengeluaran
-    document.getElementById("expenseForm").addEventListener("submit", async (e) => {
+    document.getElementById("expenseForm").addEventListener("submit",async(e)=>{
       e.preventDefault();
-      const desc = expenseDesc.value;
-      const amount = parseInt(expenseAmount.value);
-      await addDoc(collection(db, "finance"), { type:"expense", desc, amount, date:new Date() });
-      await addDoc(collection(db, "transactions"), { type:"pengeluaran", item:desc, qty:1, price:amount, total:amount, date:new Date() });
-      Swal.fire({ icon:"success", title:"Pengeluaran dicatat" });
+      const desc=expenseDesc.value;
+      const amount=parseInt(expenseAmount.value);
+      await addDoc(collection(db,"finance"),{type:"expense",desc,amount,date:new Date()});
+      Swal.fire("Berhasil!","Pengeluaran dicatat.","success");
       expenseForm.reset();
     });
 
     // Kredit
-    document.getElementById("creditForm").addEventListener("submit", async (e) => {
+    document.getElementById("creditForm").addEventListener("submit",async(e)=>{
       e.preventDefault();
-      const name = creditName.value;
-      const amount = parseInt(creditAmount.value);
-      await addDoc(collection(db, "credits"), { name, amount, status:"belum lunas", date:new Date() });
-      await addDoc(collection(db, "transactions"), { type:"piutang", item:name, qty:1, price:amount, total:amount, date:new Date() });
-      Swal.fire({ icon:"success", title:"Piutang dicatat" });
+      const name=creditName.value;
+      const amount=parseInt(creditAmount.value);
+      await addDoc(collection(db,"credits"),{name,amount,status:"belum lunas",date:new Date()});
+      Swal.fire("Berhasil!","Piutang dicatat.","success");
       creditForm.reset();
     });
 
     // Stok
-    const stockList = document.getElementById("stockList");
-    const stockCategory = document.getElementById("stockCategory");
-
-    document.getElementById("stockForm").addEventListener("submit", async (e) => {
+    const stockList=document.getElementById("stockList");
+    document.getElementById("stockForm").addEventListener("submit",async(e)=>{
       e.preventDefault();
-      const name = stockItem.value;
-      const qty = parseInt(stockQty.value);
-      const price = parseInt(stockPrice.value);
-      const cat = stockCategory.value;
-      await setDoc(doc(db, "stocks", name), { name, qty, price, category:cat });
-      Swal.fire({ icon:"success", title:"Stok diperbarui" });
+      const item=stockItem.value;
+      const qty=parseInt(stockQty.value);
+      const price=parseInt(stockPrice.value);
+      await setDoc(doc(db,"stocks",item),{qty,price});
+      Swal.fire("Berhasil!","Stok diperbarui.","success");
       stockForm.reset();
     });
 
-    onSnapshot(collection(db, "stocks"), (snapshot) => {
-      stockList.innerHTML = "";
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        stockList.innerHTML += `<li>${d.name} [${d.category}] - ${d.qty} pcs @Rp ${d.price}</li>`;
+    onSnapshot(collection(db,"stocks"),(snapshot)=>{
+      stockList.innerHTML="";
+      incomeItem.innerHTML="";
+      let lowStock=[];
+      snapshot.forEach(doc=>{
+        const d=doc.data();
+        stockList.innerHTML+=`<li>${doc.id}: ${d.qty} pcs (Rp ${d.price.toLocaleString()})</li>`;
+        incomeItem.innerHTML+=`<option value="${doc.id}">${doc.id} - Rp ${d.price.toLocaleString()}</option>`;
+        if(d.qty<5) lowStock.push(`${doc.id} (tersisa ${d.qty})`);
+      });
+      const alertBox=document.getElementById("lowStockAlert");
+      if(lowStock.length>0){
+        alertBox.innerText="⚠️ Stok menipis: "+lowStock.join(", ");
+        alertBox.style.display="block";
+      }else alertBox.style.display="none";
+    });
 
-        // 🚨 Notifikasi stok rendah
-        if (d.qty < 5) {
-          Toast.fire({
-            icon: "warning",
-            title: `Stok menipis: ${d.name} tersisa ${d.qty}`
-          });
-        }
+    // Cashflow
+    onSnapshot(query(collection(db,"finance"),orderBy("date","desc")),(snapshot)=>{
+      cashFlowList.innerHTML="";
+      snapshot.forEach(doc=>{
+        const d=doc.data();
+        cashFlowList.innerHTML+=`<p>${new Date(d.date.seconds*1000).toLocaleString()} - ${d.type==="income"?"<i class='fa-solid fa-plus text-green'></i>":"<i class='fa-solid fa-minus'></i>"} Rp ${d.amount.toLocaleString()}</p>`;
       });
     });
 
-    // Kategori
-    const catList = document.getElementById("categoryList");
-    document.getElementById("categoryForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const name = categoryName.value;
-      await addDoc(collection(db, "categories"), { name });
-      Swal.fire({ icon:"success", title:"Kategori ditambah" });
-      categoryForm.reset();
-    });
-
-    onSnapshot(collection(db, "categories"), (snapshot) => {
-      stockCategory.innerHTML = "<option value='' disabled selected>Pilih Kategori</option>";
-      catList.innerHTML = "";
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        stockCategory.innerHTML += `<option value="${d.name}">${d.name}</option>`;
-        catList.innerHTML += `<li>${d.name} <button onclick="deleteCategory('${doc.id}')">Hapus</button></li>`;
+    // History
+    onSnapshot(query(collection(db,"finance"),orderBy("date","desc")),(snapshot)=>{
+      historyList.innerHTML="";
+      snapshot.forEach(doc=>{
+        const d=doc.data();
+        historyList.innerHTML+=`<p>${new Date(d.date.seconds*1000).toLocaleString()} - ${d.type}: Rp ${d.amount.toLocaleString()}</p>`;
       });
     });
 
-    window.deleteCategory = async (id) => {
-      await deleteDoc(doc(db, "categories", id));
-      Swal.fire({ icon:"success", title:"Kategori dihapus" });
-    };
-
-    // Riwayat Transaksi
-    onSnapshot(collection(db, "transactions"), (snapshot) => {
-      const table = document.getElementById("transactionTable");
-      table.innerHTML = "";
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        table.innerHTML += `
-          <tr>
-            <td>${new Date(d.date.seconds*1000).toLocaleString()}</td>
-            <td>${d.type}</td>
-            <td>${d.item}</td>
-            <td>${d.qty}</td>
-            <td>Rp ${d.total.toLocaleString()}</td>
-          </tr>`;
+    // Tabs
+    document.querySelectorAll(".tab-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+        document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab).classList.add("active");
       });
+    });
+
+    // Dark mode
+    const toggle=document.querySelector(".dark-toggle");
+    toggle.addEventListener("click",()=>{
+      document.body.classList.toggle("dark");
+      toggle.innerHTML=document.body.classList.contains("dark")?"<i class='fa-solid fa-sun'></i>":"<i class='fa-solid fa-moon'></i>";
     });
   </script>
 </body>
