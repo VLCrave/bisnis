@@ -7,352 +7,235 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
-    :root {
-      --primary: #ff6600;
-      --bg: #f4f7fa;
-      --text: #333;
-      --card: #fff;
-    }
-    body.dark {
-      --primary: #ff944d;
-      --bg: #1e1e1e;
-      --text: #f1f1f1;
-      --card: #2a2a2a;
-    }
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0; padding: 0;
-      background: var(--bg); color: var(--text);
-      transition: background 0.3s, color 0.3s;
-    }
-    header {
-      background: var(--primary); color: #fff;
-      text-align: center; padding: 1rem;
-      position: sticky; top: 0; z-index: 10;
-    }
-    .tabs {
-      display: flex; justify-content: center; gap: 1rem;
-      margin-top: .5rem;
-    }
-    .tabs button {
-      background: #fff; border: none; padding: .5rem 1rem;
-      border-radius: 5px; cursor: pointer; font-weight: bold;
-    }
-    .tabs button.active {
-      background: var(--primary); color: #fff;
-    }
-    .container {
-      max-width: 1100px; margin: auto;
-      padding: 1rem;
-    }
-    h2 { margin-top: 2rem; color: var(--primary); }
-    form, .card {
-      background: var(--card); padding: 1rem; margin: 1rem 0;
-      border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    input, select, button {
-      padding: .5rem; margin: .3rem 0;
-      border: 1px solid #ddd; border-radius: 4px;
-      width: 100%;
-    }
-    button {
-      background: var(--primary); color: #fff; border: none;
-      cursor: pointer; font-weight: bold;
-    }
-    button:hover { opacity: .9; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
-      gap: 1rem;
-    }
-    .stat {
-      background: var(--card); padding: 1rem;
-      border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    .stat h3 { margin: 0; font-size: 1.5rem; }
-    .floating {
-      position: fixed; bottom: 20px; right: 20px;
-      background: crimson; color: #fff; padding: 10px 15px;
-      border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,.2);
-      display: none; z-index: 1000;
-    }
-    .dark-toggle {
-      position: absolute; right: 10px; top: 10px;
-      cursor: pointer; font-size: 1.2rem;
-    }
-    .filter {
-      margin: 1rem 0; text-align: right;
-    }
-    .filter select {
-      width: auto; padding: .5rem;
-    }
-    section { display: none; }
-    section.active { display: block; }
+    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f4f4; transition:0.3s; }
+    header { background:#333; color:#fff; padding:15px; display:flex; justify-content:space-between; align-items:center; }
+    header h1 { margin:0; font-size:18px; }
+    nav { display:flex; gap:15px; }
+    nav a { color:#fff; text-decoration:none; cursor:pointer; }
+    .dark { background:#121212; color:#f1f1f1; }
+    .container { padding:20px; }
+    .card { background:#fff; padding:15px; border-radius:8px; margin-bottom:15px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+    .dark .card { background:#1e1e1e; color:#f1f1f1; }
+    .tabs { display:flex; gap:10px; margin-bottom:20px; }
+    .tabs button { padding:10px 15px; border:none; cursor:pointer; border-radius:5px; background:#ddd; }
+    .tabs button.active { background:#333; color:#fff; }
+    table { width:100%; border-collapse:collapse; margin-top:10px; }
+    th, td { padding:10px; border:1px solid #ccc; text-align:left; }
+    .floating { position:fixed; bottom:20px; right:20px; background:red; color:#fff; padding:10px 15px; border-radius:5px; display:none; }
   </style>
 </head>
 <body>
   <header>
     <h1><i class="fa-solid fa-store"></i> CraveStreet - Sistem Keuangan</h1>
-    <div class="dark-toggle"><i class="fa-solid fa-moon"></i></div>
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
-      <button class="tab-btn" data-tab="cashflow">Arus Kas</button>
-      <button class="tab-btn" data-tab="history">Riwayat Transaksi</button>
-    </div>
+    <nav>
+      <a onclick="setTab('dashboard')"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a onclick="setTab('cashflow')"><i class="fa-solid fa-money-bill-transfer"></i> Arus Kas</a>
+      <a onclick="setTab('transactions')"><i class="fa-solid fa-list"></i> Riwayat</a>
+      <a onclick="setTab('leaderboard')"><i class="fa-solid fa-trophy"></i> Leaderboard</a>
+      <a onclick="toggleDark()"><i class="fa-solid fa-moon"></i></a>
+    </nav>
   </header>
 
   <div class="container">
+    <div class="tabs">
+      <button onclick="setTab('dashboard')" id="tab-dashboard" class="active">Dashboard</button>
+      <button onclick="setTab('cashflow')" id="tab-cashflow">Arus Kas</button>
+      <button onclick="setTab('transactions')" id="tab-transactions">Riwayat Transaksi</button>
+      <button onclick="setTab('leaderboard')" id="tab-leaderboard">Leaderboard</button>
+    </div>
+
     <!-- Dashboard -->
-    <section id="dashboard" class="active">
-      <div class="filter">
-        <label>Filter: 
-          <select id="filterRange">
-            <option value="all">Semua</option>
-            <option value="day">Harian</option>
-            <option value="week">Mingguan</option>
-            <option value="month">Bulanan</option>
-          </select>
-        </label>
-      </div>
-      <div class="grid">
-        <div class="stat">
-          <i class="fa-solid fa-wallet fa-2x"></i>
-          <h3 id="kas">Rp 0</h3>
-          <p>Arus Kas</p>
-        </div>
-        <div class="stat">
-          <i class="fa-solid fa-chart-line fa-2x"></i>
-          <h3 id="laba">Rp 0</h3>
-          <p>Laba Bersih</p>
-        </div>
-        <div class="stat">
-          <i class="fa-solid fa-money-bill-trend-up fa-2x"></i>
-          <h3 id="totalIncome">Rp 0</h3>
-          <p>Total Penjualan</p>
-        </div>
-        <div class="stat">
-          <i class="fa-solid fa-money-bill-transfer fa-2x"></i>
-          <h3 id="totalExpense">Rp 0</h3>
-          <p>Total Pengeluaran</p>
-        </div>
-      </div>
-
-      <!-- Penjualan -->
-      <h2><i class="fa-solid fa-cart-shopping"></i> Pencatatan Penjualan</h2>
-      <form id="incomeForm">
-        <select id="incomeItem" required></select>
-        <input type="number" id="incomeQty" placeholder="Jumlah Terjual" required>
-        <button type="submit">+ Tambah Penjualan</button>
-      </form>
-
-      <!-- Pengeluaran -->
-      <h2><i class="fa-solid fa-coins"></i> Pencatatan Pengeluaran</h2>
-      <form id="expenseForm">
-        <input type="text" id="expenseDesc" placeholder="Keterangan" required>
-        <input type="number" id="expenseAmount" placeholder="Jumlah Pengeluaran" required>
-        <button type="submit">+ Tambah Pengeluaran</button>
-      </form>
-
-      <!-- Kredit/Piutang -->
-      <h2><i class="fa-solid fa-hand-holding-dollar"></i> Kredit/Piutang</h2>
-      <form id="creditForm">
-        <input type="text" id="creditName" placeholder="Nama Pelanggan" required>
-        <input type="number" id="creditAmount" placeholder="Jumlah Piutang" required>
-        <button type="submit">+ Tambah Piutang</button>
-      </form>
-
-      <!-- Stok Barang -->
-      <h2><i class="fa-solid fa-boxes-stacked"></i> Manajemen Stok</h2>
-      <form id="stockForm">
-        <input type="text" id="stockItem" placeholder="Nama Produk" required>
-        <input type="number" id="stockQty" placeholder="Jumlah Stok" required>
-        <input type="number" id="stockPrice" placeholder="Harga Jual" required>
-        <button type="submit">+ Tambah / Update Stok</button>
-      </form>
-      <div class="card">
-        <h3>Daftar Stok:</h3>
-        <ul id="stockList"></ul>
-      </div>
-    </section>
+    <div id="dashboard" class="card">
+      <h2><i class="fa-solid fa-chart-line"></i> Statistik</h2>
+      <label>Filter: 
+        <select id="filter" onchange="loadStats()">
+          <option value="daily">Harian</option>
+          <option value="weekly">Mingguan</option>
+          <option value="monthly">Bulanan</option>
+        </select>
+      </label>
+      <p><i class="fa-solid fa-sack-dollar"></i> Total Pemasukan: <span id="income">Rp0</span></p>
+      <p><i class="fa-solid fa-coins"></i> Total Pengeluaran: <span id="expense">Rp0</span></p>
+      <p><i class="fa-solid fa-wallet"></i> Laba Bersih: <span id="profit">Rp0</span></p>
+    </div>
 
     <!-- Arus Kas -->
-    <section id="cashflow">
-      <h2><i class="fa-solid fa-wallet"></i> Arus Kas</h2>
-      <div id="cashFlowList" class="card"></div>
-    </section>
+    <div id="cashflow" class="card" style="display:none;">
+      <h2><i class="fa-solid fa-money-bill-wave"></i> Arus Kas Realtime</h2>
+      <p>Total Kas: <span id="cash">Rp0</span></p>
+    </div>
 
     <!-- Riwayat Transaksi -->
-    <section id="history">
-      <h2><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Transaksi</h2>
-      <div id="historyList" class="card"></div>
-    </section>
+    <div id="transactions" class="card" style="display:none;">
+      <h2><i class="fa-solid fa-receipt"></i> Riwayat Transaksi</h2>
+      <table>
+        <thead><tr><th>Tanggal</th><th>Jenis</th><th>Nominal</th><th>Customer/Deskripsi</th></tr></thead>
+        <tbody id="transaction-list"></tbody>
+      </table>
+    </div>
+
+    <!-- Leaderboard -->
+    <div id="leaderboard" class="card" style="display:none;">
+      <h2><i class="fa-solid fa-ranking-star"></i> Leaderboard Penjualan</h2>
+      <table>
+        <thead><tr><th>Nama Customer</th><th>Total Belanja</th></tr></thead>
+        <tbody id="leaderboard-list"></tbody>
+      </table>
+    </div>
+
+    <!-- Form Input -->
+    <div class="card">
+      <h2><i class="fa-solid fa-pen-to-square"></i> Input Transaksi</h2>
+      <button onclick="addIncome()">+ Tambah Penjualan</button>
+      <button onclick="addExpense()">+ Tambah Pengeluaran</button>
+    </div>
   </div>
 
-  <div class="floating" id="lowStockAlert"></div>
+  <div class="floating" id="notif">⚠️ Stok beberapa barang kurang dari 5!</div>
 
+  <!-- Firebase -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot, getDoc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
       authDomain: "crave-street-id.firebaseapp.com",
       projectId: "crave-street-id",
-      storageBucket: "crave-street-id.firebasestorage.app",
+      storageBucket: "crave-street-id.appspot.com",
       messagingSenderId: "221955592583",
-      appId: "1:221955592583:web:43dc59d791e750095cc322",
+      appId: "1:221955592583:web:43dc59d791e750095cc322"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const kasEl = document.getElementById("kas");
-    const labaEl = document.getElementById("laba");
-    const totalIncomeEl = document.getElementById("totalIncome");
-    const totalExpenseEl = document.getElementById("totalExpense");
-    const filterRange = document.getElementById("filterRange");
+    const colTrans = collection(db, "transactions");
+    const colStok = collection(db, "stok");
 
-    function filterByDate(date, range) {
-      const now = new Date();
-      const d = new Date(date.seconds*1000);
-      if (range==="day") return d.toDateString()===now.toDateString();
-      if (range==="week") {
-        const start=new Date(now); start.setDate(now.getDate()-7);
-        return d>=start && d<=now;
-      }
-      if (range==="month") return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
-      return true;
+    function setTab(tab) {
+      document.querySelectorAll(".card").forEach(c => c.style.display="none");
+      document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+      document.getElementById(tab).style.display="block";
+      document.getElementById("tab-"+tab).classList.add("active");
     }
 
-    function refreshStats(range="all") {
-      onSnapshot(collection(db, "finance"), (snapshot) => {
-        let totalIncome=0,totalExpense=0;
-        snapshot.forEach(doc=>{
-          const data=doc.data();
-          if (!filterByDate(data.date,range)) return;
-          if(data.type==="income") totalIncome+=data.amount;
-          if(data.type==="expense") totalExpense+=data.amount;
-        });
-        const netProfit=totalIncome-totalExpense;
-        kasEl.innerText="Rp "+(totalIncome-totalExpense).toLocaleString();
-        labaEl.innerText="Rp "+netProfit.toLocaleString();
-        totalIncomeEl.innerText="Rp "+totalIncome.toLocaleString();
-        totalExpenseEl.innerText="Rp "+totalExpense.toLocaleString();
+    function toggleDark(){ document.body.classList.toggle("dark"); }
+
+    // Input Penjualan
+    async function addIncome(){
+      let stokSnap = await getDocs(colStok);
+      let list = "";
+      stokSnap.forEach(doc=>{
+        let d=doc.data();
+        list+=`<label><input type='checkbox' value='${doc.id}' data-nama='${d.nama}' data-harga='${d.harga}' data-stok='${d.jumlah}'> ${d.nama} (Stok:${d.jumlah}, Rp${d.harga})</label><br>`;
+      });
+
+      Swal.fire({
+        title:"Tambah Penjualan",
+        html:`
+          <input id="cust" class="swal2-input" placeholder="Nama Customer">
+          ${list}
+          <input id="jumlah" class="swal2-input" type="number" placeholder="Jumlah per produk (default=1)">
+          <input id="nominal" class="swal2-input" type="number" placeholder="Total Nominal">`,
+        focusConfirm:false,
+        preConfirm:()=>{
+          return {
+            cust:document.getElementById("cust").value,
+            jumlah:document.getElementById("jumlah").value||1,
+            nominal:parseInt(document.getElementById("nominal").value)||0,
+            produk:[...document.querySelectorAll("input[type=checkbox]:checked")].map(cb=>cb.dataset.nama)
+          }
+        }
+      }).then(async res=>{
+        if(res.isConfirmed){
+          await addDoc(colTrans,{
+            jenis:"income",
+            customer:res.value.cust,
+            nominal:res.value.nominal,
+            produk:res.value.produk,
+            tgl:new Date()
+          });
+          Swal.fire("Berhasil","Penjualan dicatat!","success");
+        }
       });
     }
 
-    filterRange.addEventListener("change",()=>refreshStats(filterRange.value));
-    refreshStats();
-
-    // Penjualan
-    const incomeItem=document.getElementById("incomeItem");
-    document.getElementById("incomeForm").addEventListener("submit",async(e)=>{
-      e.preventDefault();
-      const item=incomeItem.value;
-      const qty=parseInt(incomeQty.value);
-
-      const stockRef=doc(db,"stocks",item);
-      const stockSnap=await getDoc(stockRef);
-      if(!stockSnap.exists()||stockSnap.data().qty<qty){
-        Swal.fire("Gagal","Stok tidak mencukupi!","error");
-        return;
-      }
-      const price=stockSnap.data().price;
-      const total=qty*price;
-
-      await addDoc(collection(db,"finance"),{
-        type:"income",item,qty,price,amount:total,date:new Date()
+    // Input Pengeluaran
+    function addExpense(){
+      Swal.fire({
+        title:"Tambah Pengeluaran",
+        html:`<input id="ket" class="swal2-input" placeholder="Deskripsi">
+              <input id="nominal" type="number" class="swal2-input" placeholder="Nominal">`,
+        preConfirm:()=>{
+          return {
+            ket:document.getElementById("ket").value,
+            nominal:parseInt(document.getElementById("nominal").value)||0
+          }
+        }
+      }).then(async res=>{
+        if(res.isConfirmed){
+          await addDoc(colTrans,{
+            jenis:"expense",
+            deskripsi:res.value.ket,
+            nominal:res.value.nominal,
+            tgl:new Date()
+          });
+          Swal.fire("Berhasil","Pengeluaran dicatat!","success");
+        }
       });
+    }
 
-      await updateDoc(stockRef,{qty:stockSnap.data().qty-qty});
-      Swal.fire("Berhasil!","Penjualan dicatat & stok berkurang.","success");
-      incomeForm.reset();
-    });
-
-    // Pengeluaran
-    document.getElementById("expenseForm").addEventListener("submit",async(e)=>{
-      e.preventDefault();
-      const desc=expenseDesc.value;
-      const amount=parseInt(expenseAmount.value);
-      await addDoc(collection(db,"finance"),{type:"expense",desc,amount,date:new Date()});
-      Swal.fire("Berhasil!","Pengeluaran dicatat.","success");
-      expenseForm.reset();
-    });
-
-    // Kredit
-    document.getElementById("creditForm").addEventListener("submit",async(e)=>{
-      e.preventDefault();
-      const name=creditName.value;
-      const amount=parseInt(creditAmount.value);
-      await addDoc(collection(db,"credits"),{name,amount,status:"belum lunas",date:new Date()});
-      Swal.fire("Berhasil!","Piutang dicatat.","success");
-      creditForm.reset();
-    });
-
-    // Stok
-    const stockList=document.getElementById("stockList");
-    document.getElementById("stockForm").addEventListener("submit",async(e)=>{
-      e.preventDefault();
-      const item=stockItem.value;
-      const qty=parseInt(stockQty.value);
-      const price=parseInt(stockPrice.value);
-      await setDoc(doc(db,"stocks",item),{qty,price});
-      Swal.fire("Berhasil!","Stok diperbarui.","success");
-      stockForm.reset();
-    });
-
-    onSnapshot(collection(db,"stocks"),(snapshot)=>{
-      stockList.innerHTML="";
-      incomeItem.innerHTML="";
-      let lowStock=[];
-      snapshot.forEach(doc=>{
-        const d=doc.data();
-        stockList.innerHTML+=`<li>${doc.id}: ${d.qty} pcs (Rp ${d.price.toLocaleString()})</li>`;
-        incomeItem.innerHTML+=`<option value="${doc.id}">${doc.id} - Rp ${d.price.toLocaleString()}</option>`;
-        if(d.qty<5) lowStock.push(`${doc.id} (tersisa ${d.qty})`);
+    // Listener transaksi realtime
+    onSnapshot(query(colTrans,orderBy("tgl","desc")),(snap)=>{
+      let rows="";
+      let leaderboard={};
+      snap.forEach(doc=>{
+        let d=doc.data();
+        if(d.jenis=="income"){
+          rows+=`<tr><td>${new Date(d.tgl.seconds*1000).toLocaleString()}</td><td>Pemasukan</td><td>Rp${d.nominal}</td><td>${d.customer}</td></tr>`;
+          leaderboard[d.customer]=(leaderboard[d.customer]||0)+d.nominal;
+        } else {
+          rows+=`<tr><td>${new Date(d.tgl.seconds*1000).toLocaleString()}</td><td>Pengeluaran</td><td>Rp${d.nominal}</td><td>${d.deskripsi}</td></tr>`;
+        }
       });
-      const alertBox=document.getElementById("lowStockAlert");
-      if(lowStock.length>0){
-        alertBox.innerText="⚠️ Stok menipis: "+lowStock.join(", ");
-        alertBox.style.display="block";
-      }else alertBox.style.display="none";
-    });
+      document.getElementById("transaction-list").innerHTML=rows;
 
-    // Cashflow
-    onSnapshot(query(collection(db,"finance"),orderBy("date","desc")),(snapshot)=>{
-      cashFlowList.innerHTML="";
-      snapshot.forEach(doc=>{
-        const d=doc.data();
-        cashFlowList.innerHTML+=`<p>${new Date(d.date.seconds*1000).toLocaleString()} - ${d.type==="income"?"<i class='fa-solid fa-plus text-green'></i>":"<i class='fa-solid fa-minus'></i>"} Rp ${d.amount.toLocaleString()}</p>`;
+      // Leaderboard
+      let lb="";
+      Object.keys(leaderboard).sort((a,b)=>leaderboard[b]-leaderboard[a]).forEach(c=>{
+        lb+=`<tr><td>${c}</td><td>Rp${leaderboard[c]}</td></tr>`;
       });
+      document.getElementById("leaderboard-list").innerHTML=lb;
+
+      loadStats();
     });
 
-    // History
-    onSnapshot(query(collection(db,"finance"),orderBy("date","desc")),(snapshot)=>{
-      historyList.innerHTML="";
-      snapshot.forEach(doc=>{
-        const d=doc.data();
-        historyList.innerHTML+=`<p>${new Date(d.date.seconds*1000).toLocaleString()} - ${d.type}: Rp ${d.amount.toLocaleString()}</p>`;
+    async function loadStats(){
+      let filter=document.getElementById("filter").value;
+      let snap=await getDocs(colTrans);
+      let income=0,expense=0;
+      snap.forEach(doc=>{
+        let d=doc.data();
+        let t=new Date(d.tgl.seconds*1000);
+        let now=new Date();
+        let include=false;
+        if(filter=="daily"){ include=t.toDateString()==now.toDateString(); }
+        if(filter=="weekly"){
+          let weekStart=new Date(now.setDate(now.getDate()-now.getDay()));
+          include=t>=weekStart;
+        }
+        if(filter=="monthly"){ include=t.getMonth()==(new Date()).getMonth(); }
+        if(include){
+          if(d.jenis=="income") income+=d.nominal;
+          if(d.jenis=="expense") expense+=d.nominal;
+        }
       });
-    });
-
-    // Tabs
-    document.querySelectorAll(".tab-btn").forEach(btn=>{
-      btn.addEventListener("click",()=>{
-        document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
-        document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
-        btn.classList.add("active");
-        document.getElementById(btn.dataset.tab).classList.add("active");
-      });
-    });
-
-    // Dark mode
-    const toggle=document.querySelector(".dark-toggle");
-    toggle.addEventListener("click",()=>{
-      document.body.classList.toggle("dark");
-      toggle.innerHTML=document.body.classList.contains("dark")?"<i class='fa-solid fa-sun'></i>":"<i class='fa-solid fa-moon'></i>";
-    });
+      document.getElementById("income").innerText="Rp"+income;
+      document.getElementById("expense").innerText="Rp"+expense;
+      document.getElementById("profit").innerText="Rp"+(income-expense);
+      document.getElementById("cash").innerText="Rp"+(income-expense);
+    }
   </script>
 </body>
 </html>
